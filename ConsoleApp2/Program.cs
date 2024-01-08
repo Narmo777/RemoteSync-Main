@@ -14,7 +14,7 @@ namespace Server
         {
             await Console.Out.WriteLineAsync("i am server ");
 
-            var s = new Server(300);
+            var s = new Server(300); // set server port to 300 
 
             await s.Start();
         }

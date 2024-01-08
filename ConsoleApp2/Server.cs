@@ -13,7 +13,7 @@ namespace Server
     public class Server
     {
         private TcpListener listener;
-        public const string IP= "127.0.0.1";
+        public const string IP = "127.0.0.1";
         private int port;
         public Server(int port)
         {
@@ -81,6 +81,7 @@ namespace Server
         {
             return BitConverter.ToInt32(p.Data, 0);
         }
+        
         private Packet HandleRscRequest(ref Packet p)
         {
             var id=GetProcessIdFrom(ref p);

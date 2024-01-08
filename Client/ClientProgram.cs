@@ -14,7 +14,7 @@ namespace Client
     {
         static async Task Main(string[] args)
         {
-            await Clinet.Connect(Server.Server.IP, 300);
+            await Clinet.Connect(Server.Server.IP, 300); //connect to server with server ip and port 300 
             Console.WriteLine("Hello, World!");
         }
     }

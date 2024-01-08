@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Protocol
 {
-    public enum RequestType:byte
+    public enum RequestType:byte //enum for all functions the app will do
     {
         Get=0,
         Kill,
@@ -18,18 +18,20 @@ namespace Protocol
     }
     
     public struct Packet {
-        public const int HeaderSize=sizeof(int)+sizeof(RequestType);
+        public const int HeaderSize = sizeof(int) + sizeof(RequestType);
+        
         public RequestType RequestType;
         public int DataSize;
         public byte[] Data;
-
+        
+        //packet builder, recive byte[]
         public Packet(RequestType requestType, byte[] data)
         {
             RequestType = requestType;
             DataSize = data.Length;
             Data = data;
         }
-
+        //packet builder, recive string and converts to bytes using the protocol
         public Packet(RequestType requestType, string data)
         {
             RequestType = requestType;
@@ -39,7 +41,7 @@ namespace Protocol
 
         public async static Task<Packet> FromNetworkStream(NetworkStream ns)
         {
-            var header = new byte[HeaderSize];
+            var header = new byte[HeaderSize]; //the first byte of the header is the request type, according to the enum
             int totalRead = 0, bytesRead = 0;
 
             // Read the header
@@ -70,7 +72,7 @@ namespace Protocol
 
         public static implicit operator byte[](Packet packet)
         {
-            var ret=new byte[packet.DataSize+HeaderSize];
+            var ret = new byte[packet.DataSize + HeaderSize];
             ret[0] = ((byte)packet.RequestType);
             Array.Copy(BitConverter.GetBytes(packet.DataSize), 0, ret, 1, HeaderSize - 1); //ret[1..(HeaderSize - 1)] = BitConverter.GetBytes(packet.DataSize);
             Array.Copy(packet.Data, 0, ret, HeaderSize,packet.DataSize);//ret[HeaderSize..] = packet.Data

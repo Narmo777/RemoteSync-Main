@@ -14,7 +14,7 @@ namespace Client
         public Clinet() { }
         public static async Task Connect(string ip, int port)
         {
-            var clinet = new TcpClient(ip, port);
+            var clinet = new TcpClient(ip, port); //creates a new tcp client
             var stream = clinet.GetStream();
 
             var baseMsg = new Packet(RequestType.Get, "");
