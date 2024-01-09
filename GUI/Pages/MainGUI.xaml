@@ -1,0 +1,29 @@
+﻿<Page x:Class="RemoteSync.MainGUI"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:local="clr-namespace:RemoteSync"
+      mc:Ignorable="d" 
+      d:DesignHeight="700" d:DesignWidth="1200"
+      Title="MainGUI"
+      Background="White">
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition/>
+            <ColumnDefinition Width="4*"/>
+        </Grid.ColumnDefinitions>
+        
+        <StackPanel Grid.Column="0">
+            <Button x:Name="Get" Height="50" Content="Get all procceses" FontSize="17" Click="Get_Click"/>
+            <Button x:Name="Kill" Height="50" Content="kill a procces" FontSize="17" Click="Kill_Click"/>
+            <Button x:Name="Rsc" Height="50" Content="Get all resources" FontSize="17" Click="Rsc_Click"/>
+        </StackPanel>
+
+        <StackPanel Grid.Column="1">
+            <ListBox x:Name="MainListBox" Height="700" d:ItemsSource="{d:SampleData ItemCount=5}" SelectionChanged="MainListBox_SelectionChanged" />
+        </StackPanel>
+        
+    </Grid>
+</Page>

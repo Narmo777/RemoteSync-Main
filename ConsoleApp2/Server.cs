@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.Net.Sockets;
 using System.Net;
 using Protocol;
+
 namespace Server
 {
 
@@ -77,11 +78,7 @@ namespace Server
                 await Console.Out.WriteLineAsync($"Error with client - {e}");
             }
         }
-        private int GetProcessIdFrom(ref Packet p)
-        {
-            return BitConverter.ToInt32(p.Data, 0);
-        }
-        
+                
         private Packet HandleRscRequest(ref Packet p)
         {
             var id=GetProcessIdFrom(ref p);
@@ -93,11 +90,36 @@ namespace Server
         }
         private Packet HandleKillRequest(ref Packet p)
         {
-            var id =GetProcessIdFrom(ref p);
+            //var id = GetProcessIdFrom(ref p);
+            //Process process = Process.GetProcessById(id);
+            //process.Kill();
+            //Process.GetProcessById(id).Kill();
 
-            Process.GetProcessById(id).Kill();
+            var id = int.Parse(p.GetContentAsString());
+            int processIdToKill = id;
+            string msg;
+            
+            try
+            {
+                // Get the process by its ID
+                Process processToKill = Process.GetProcessById(processIdToKill);
 
-            return new Packet(RequestType.Ok,"");
+                // Kill the process
+                processToKill.Kill();
+
+                msg = $"Process with ID {processIdToKill} has been killed.";
+            }
+            catch (ArgumentException)
+            {
+                msg = $"Process with ID {processIdToKill} not found.";
+            }
+            catch (Exception ex)
+            {
+                msg = $"An error occurred: {ex.Message}";
+            }
+
+
+            return new Packet(RequestType.Ok, msg);
         }
         private Packet HandleGetRequest()
         {
@@ -108,6 +130,7 @@ namespace Server
 
             return new Packet(RequestType.Ok,data);
         }
+        
         public Packet HandleRequest(ref Packet p)
         {
             switch (p.RequestType)
@@ -122,6 +145,9 @@ namespace Server
                     return new Packet(RequestType.Err, "Cant Process Request");
             }
         }
-
+        private int GetProcessIdFrom(ref Packet p)
+        {
+            return BitConverter.ToInt32(p.Data, 0);
+        }       
     }
 }

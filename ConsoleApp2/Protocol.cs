@@ -70,7 +70,7 @@ namespace Protocol
             return new Packet(requestType, data);
         }
 
-        public static implicit operator byte[](Packet packet)
+        public static implicit operator byte[](Packet packet) //func to cast from packet to byte
         {
             var ret = new byte[packet.DataSize + HeaderSize];
             ret[0] = ((byte)packet.RequestType);
