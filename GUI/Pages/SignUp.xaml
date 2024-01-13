@@ -24,6 +24,7 @@
         <TextBox Name ="Username" HorizontalAlignment="Left" Margin="560,225,0,0" TextWrapping="Wrap" Text="Enter your Username" VerticalAlignment="Top" Width="314" Height="32" Opacity="0.5" FontSize="17" TextChanged="UsernameTextBox_TextChanged" PreviewMouseDown="UsernameTextBox_MouseDown"/>
         <Label Content="ReType Password " HorizontalAlignment="Left" Margin="560,395,0,0" VerticalAlignment="Top" FontSize="17" FontWeight="Bold"/>
         <TextBox Name="ReTypePassword" HorizontalAlignment="Left" Margin="560,428,0,0" TextWrapping="Wrap" Text="ReType your Password" VerticalAlignment="Top" Width="314" Height="32" FontSize="17" Opacity="0.5" TextChanged="Passwaord2TextBox_TextChanged" PreviewMouseDown="Password2TextBox_MouseDown"/>
+        
 
     </Grid>
 </Page>

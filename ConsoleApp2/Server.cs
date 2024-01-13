@@ -78,18 +78,35 @@ namespace Server
                 await Console.Out.WriteLineAsync($"Error with client - {e}");
             }
         }
-                
+        
+        //all buttons 
         private Packet HandleRscRequest(ref Packet p)
         {
-            var id=GetProcessIdFrom(ref p);
-            var process=Process.GetProcessById(id);
+            var id = GetProcessIdFrom(ref p);
+            //var process = Process.GetProcessById(id);
 
-            var processRsc = $"Mem:{process.WorkingSet64}";
+            //var processRsc = $"Mem:{process.WorkingSet64}";
+
+            var processRsc = "";
+
+
+            // Create a PerformanceCounter for CPU usage
+            using (PerformanceCounter cpuCounter = new PerformanceCounter("Process", "% Processor Time", Process.GetCurrentProcess().ProcessName))
+            {
+                cpuCounter.NextValue(); // Call this once to get initial value
+
+                // Get CPU usage for the specific process
+                float cpuUsage = cpuCounter.NextValue();
+
+                Console.WriteLine($"CPU Usage for Process ID {id}: {cpuUsage}%");
+            }
+
 
             return new Packet(RequestType.Ok, processRsc);
         }
         private Packet HandleKillRequest(ref Packet p)
         {
+            
             //var id = GetProcessIdFrom(ref p);
             //Process process = Process.GetProcessById(id);
             //process.Kill();
@@ -106,7 +123,7 @@ namespace Server
 
                 // Kill the process
                 processToKill.Kill();
-
+                
                 msg = $"Process with ID {processIdToKill} has been killed.";
             }
             catch (ArgumentException)

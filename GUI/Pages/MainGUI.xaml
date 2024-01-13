@@ -14,7 +14,7 @@
             <ColumnDefinition/>
             <ColumnDefinition Width="4*"/>
         </Grid.ColumnDefinitions>
-        
+
         <StackPanel Grid.Column="0">
             <Button x:Name="Get" Height="50" Content="Get all procceses" FontSize="17" Click="Get_Click"/>
             <Button x:Name="Kill" Height="50" Content="kill a procces" FontSize="17" Click="Kill_Click"/>
@@ -22,7 +22,10 @@
         </StackPanel>
 
         <StackPanel Grid.Column="1">
-            <ListBox x:Name="MainListBox" Height="700" d:ItemsSource="{d:SampleData ItemCount=5}" SelectionChanged="MainListBox_SelectionChanged" />
+            <StackPanel Height="50" HorizontalAlignment="Right">
+                <TextBox x:Name="Search" Text="Search" FontSize="15" Width="150" Height="25" TextChanged="SearchBox_TextChanged" PreviewMouseDown="SearchTextBox_MouseDown"/>
+            </StackPanel>
+            <ListBox x:Name="MainListBox" Height="600" d:ItemsSource="{d:SampleData ItemCount=5}" SelectionChanged="MainListBox_SelectionChanged" />
         </StackPanel>
         
     </Grid>
