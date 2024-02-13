@@ -5,13 +5,13 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:RemoteSync"
         mc:Ignorable="d"
-        Title="LogIn" Height="700" Width="1200">   
+        Title="LogIn" Height="700" Width="1200">
     <Page.Background>
-        <ImageBrush ImageSource="C:\Users\WINDOWS\source\repos\ConsoleApp2\GUI\Images\login page.png" Stretch="Fill" />
+        <ImageBrush ImageSource="/GUI;component/Images/login page.png" Stretch="Fill" />
     </Page.Background>
     <Grid>
         <Label Content="RemoteSync" HorizontalAlignment="Left" Margin="204,363,0,0" VerticalAlignment="Top" FontSize="22" FontWeight="Bold" FontStyle="Italic" Height="54" Width="151"/>
-        <Image HorizontalAlignment="Left" Height="168" Margin="187,192,0,0" VerticalAlignment="Top" Width="172" Source="C:\Users\WINDOWS\source\repos\ConsoleApp2\GUI\Images\project-management.png"/>
+        <Image HorizontalAlignment="Left" Height="168" Margin="187,192,0,0" VerticalAlignment="Top" Width="172" Source="/GUI;component/Images/project-management.png"/>
         <Label Content="Log In" HorizontalAlignment="Left" Height="64" Margin="630,130,0,0" VerticalAlignment="Top" Width="174" FontSize="25" FontWeight="Bold"/>
         
         <Label Content="Username" HorizontalAlignment="Left" Height="35" Margin="560,257,0,0" VerticalAlignment="Top" Width="98" FontWeight="Bold" FontSize="17"/>
