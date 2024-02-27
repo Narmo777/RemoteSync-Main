@@ -22,11 +22,21 @@
         </StackPanel>
 
         <StackPanel Grid.Column="1">
-            <StackPanel Height="50" HorizontalAlignment="Right">
+            <StackPanel Height="25" HorizontalAlignment="Right">
                 <TextBox x:Name="Search" Text="Search" FontSize="15" Width="150" Height="25" TextChanged="SearchBox_TextChanged" PreviewMouseDown="SearchTextBox_MouseDown"/>
             </StackPanel>
-            <ListBox x:Name="MainListBox" Height="600" d:ItemsSource="{d:SampleData ItemCount=5}" SelectionChanged="MainListBox_SelectionChanged" />
+
+            <TabControl x:Name="ComputerTabs">
+                <TabItem Header="computer 1">
+                    <ListBox x:Name="MainListBox" Height="600" d:ItemsSource="{d:SampleData ItemCount=5}" SelectionChanged="MainListBox_SelectionChanged" />
+                </TabItem>
+                <TabItem Header="computer 2">
+                    <ListBox x:Name="comp2ListBox" Height="600" d:ItemsSource="{d:SampleData ItemCount=5}" />
+                </TabItem>
+            </TabControl>
+
         </StackPanel>
-        
+
+
     </Grid>
 </Page>

@@ -102,29 +102,42 @@ namespace RemoteSync
                 this.id = proccesId;
             }
         }
-        
-        //refresh and helpers
-        private void RefreshProcesses()
-        {
-            // Get the new list of processes
-            var newProcesses = Process.GetProcesses()
-                                       .Select(p => $"{p.Id}|{p.ProcessName}")
-                                       .ToList();
 
-            // Add missing items
+        //refresh and helpers
+        public static async Task<Packet> SendRequest(Packet p)
+        {
+            using (var clinet = new TcpClient(Server.Server.IP, Server.Server.PORT))
+            {
+                using (var stream = clinet.GetStream())
+                {
+
+                    await stream.WriteAsync((byte[])p, 0, p.DataSize + Packet.HeaderSize);
+                    await stream.FlushAsync();
+
+                    return await Packet.FromNetworkStream(stream);
+                }
+            }
+        }
+        public async Task<List<(int, string)>> GetProcesscesFromServer() => (await SendRequest(new Packet(RequestType.Get, ""))).GetContentAsString().Split('#').Select(x => x.Split('|')).Select(x => (int.Parse(x[0]), x[1])).ToList();
+        private async Task RefreshScreenFromServer()
+        {
+            var newProcesses = await GetProcesscesFromServer();
+            Dispatcher.Invoke(() => UpdateProcessList(newProcesses));
+        }
+        private void UpdateProcessList(List<(int, string)> newProcesses)
+        {
             foreach (var newItem in newProcesses)
             {
-                if (!MainListBox.Items.Cast<(int, string)>().Any(existingItem => AreEqualProcesses(newItem, existingItem)))
+                if (!MainListBox.Items.Cast<(int, string)>().Any(existingItem => existingItem.Item1 == newItem.Item1))
                 {
-                    MainListBox.Items.Add(ParseProcessInfo(newItem));
+                    MainListBox.Items.Add(newItem);
                 }
             }
 
             // Remove items that no longer exist
             foreach (var existingItem in MainListBox.Items.Cast<(int, string)>().ToList())
             {
-                var existingProcess = $"{existingItem.Item1}|{existingItem.Item2}";
-                if (!newProcesses.Contains(existingProcess))
+                if (!newProcesses.Contains(existingItem))
                 {
                     MainListBox.Items.Remove(existingItem);
                 }
@@ -140,16 +153,6 @@ namespace RemoteSync
                     }
                 }
             }
-        }        
-        private bool AreEqualProcesses(string processString1, (int, string) processInfo2) // Helper method to compare process information
-        {
-            var processInfo1 = ParseProcessInfo(processString1);
-            return processInfo1.Item1 == processInfo2.Item1 && processInfo1.Item2 == processInfo2.Item2;
-        }        
-        private (int, string) ParseProcessInfo(string processString) // Helper method to parse process information from the string
-        {
-            var parts = processString.Split('|');
-            return (int.Parse(parts[0]), parts[1]);
         }
 
         //setting timer for refresh
@@ -159,17 +162,12 @@ namespace RemoteSync
             // Initialize the timer
             timer = new DispatcherTimer();
             timer.Interval = TimeSpan.FromMilliseconds(1000); // Set the interval to 1000 milliseconds = 1 second
-            timer.Tick += Timer_Tick;
+            timer.Tick += async (sender, e) => await RefreshScreenFromServer();
 
             // Start the timer
             timer.Start();
         }
-        private void Timer_Tick(object sender, EventArgs e)
-        {
-            // Code to be executed on each timer tick
-            // This will be called every 1000 milliseconds (1 second) in this example
-            RefreshProcesses();
-        }
+
 
         //search box
         private string search = "";
@@ -183,5 +181,6 @@ namespace RemoteSync
             if (Search.Text == "Search")
                 Search.Text = string.Empty;
         }
+       
     }
 }

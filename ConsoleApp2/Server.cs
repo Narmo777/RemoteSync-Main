@@ -15,16 +15,15 @@ namespace Server
     {
         private TcpListener listener;
         public const string IP = "127.0.0.1";
-        private int port;
-        public Server(int port)
+        public const int PORT = 300;
+        public Server()
         {
-            this.port = port;
         }
 
         public async Task Start()
         {
             var ip = IPAddress.Parse(IP);
-            this.listener = new TcpListener(ip, port);
+            this.listener = new TcpListener(ip, PORT);
 
             listener.Start();
             var clientTasks = new List<Task>();
