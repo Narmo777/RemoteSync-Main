@@ -19,6 +19,7 @@
             <Button x:Name="Get" Height="50" Content="Get all procceses" FontSize="17" Click="Get_Click"/>
             <Button x:Name="Kill" Height="50" Content="kill a procces" FontSize="17" Click="Kill_Click"/>
             <Button x:Name="Rsc" Height="50" Content="Get all resources" FontSize="17" Click="Rsc_Click"/>
+            <Button x:Name="Comp" Height="50" Content="Add new computer" FontSize="17" Click="Comp_Click"/>
         </StackPanel>
 
         <StackPanel Grid.Column="1">
@@ -29,9 +30,6 @@
             <TabControl x:Name="ComputerTabs">
                 <TabItem Header="computer 1">
                     <ListBox x:Name="MainListBox" Height="600" d:ItemsSource="{d:SampleData ItemCount=5}" SelectionChanged="MainListBox_SelectionChanged" />
-                </TabItem>
-                <TabItem Header="computer 2">
-                    <ListBox x:Name="comp2ListBox" Height="600" d:ItemsSource="{d:SampleData ItemCount=5}" />
                 </TabItem>
             </TabControl>
 

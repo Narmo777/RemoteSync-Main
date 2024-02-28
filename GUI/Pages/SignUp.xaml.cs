@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Net;
 using System.Net.Mail;
 using System.Security.Cryptography;
 using System.Text;
@@ -19,6 +20,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using System.Net.Mime;
 
 namespace RemoteSync
 {
@@ -70,6 +72,45 @@ namespace RemoteSync
             {
                 verify = false;
                 string error = "Invalid email address";
+                New_Error_Window(error);
+            }
+            if (IsEmailValid(this.email))
+            {
+                //if email is valid, send a code and validate
+                Random number = new Random();
+                number.Next(100, 1000);
+
+                // Sender's email address and password
+                string senderEmail = "remotesyncvalidate@gmail.com";
+                string senderPassword = "RemoteSync777";
+                string error = "";
+                try
+                {
+                    var smtpClient = new SmtpClient("smtp.gmail.com")
+                    {
+                        Port = 587,
+                        Credentials = new NetworkCredential(senderEmail, senderPassword),
+                        EnableSsl = true,
+                    };
+                    smtpClient.Send(senderEmail, this.email, "Validation code", $"Your validation code is {number}");
+                    error = "Email sent successfully!";
+                }
+                catch (SmtpException ex)
+                {
+                    error = "SMTP error occurred: " + ex.Message;
+                }
+                catch (InvalidOperationException ex)
+                {
+                    error = "Invalid operation: " + ex.Message;
+                }
+                catch (ArgumentException ex)
+                {
+                    error = "Argument error: " + ex.Message;
+                }
+                catch (Exception ex)
+                {
+                    error = "An error occurred: " + ex.Message;
+                }
                 New_Error_Window(error);
             }
             if (verify)

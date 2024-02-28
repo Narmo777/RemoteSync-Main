@@ -53,7 +53,14 @@ namespace RemoteSync
         {
 
         }
-
+        private void Comp_Click(object sender, RoutedEventArgs e)
+        {
+            TabItem newComputer = new TabItem
+            {
+                Header = "computer 3"
+            };
+            ComputerTabs.Items.Add(newComputer);
+        }
         //connect the gui to the server
         public async Task Connect(string ip, int port, Packet p)
         {
@@ -181,6 +188,7 @@ namespace RemoteSync
             if (Search.Text == "Search")
                 Search.Text = string.Empty;
         }
-       
+
+
     }
 }
