@@ -21,6 +21,8 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Net.Mime;
+using GUI.Pages;
+using System.Collections;
 
 namespace RemoteSync
 {
@@ -33,7 +35,7 @@ namespace RemoteSync
         private string password = null;
         private string email = null;
         private string password2 = null;
-        
+
         public SignUp()
         {
             InitializeComponent();
@@ -44,7 +46,6 @@ namespace RemoteSync
             errorWindow.ErrorWin.Text = error;
             errorWindow.Show();
         }
-
         private void SignUp_Click(object sender, RoutedEventArgs e)
         {
             MongoClient dbClient = new MongoClient("mongodb+srv://Nimrod:NimrodBenHamo85@cluster0.nvpsjki.mongodb.net/");
@@ -74,15 +75,15 @@ namespace RemoteSync
                 string error = "Invalid email address";
                 New_Error_Window(error);
             }
+            int codeToCheck = new Random().Next(100, 1000);
             if (IsEmailValid(this.email))
             {
                 //if email is valid, send a code and validate
-                Random number = new Random();
-                number.Next(100, 1000);
+
 
                 // Sender's email address and password
                 string senderEmail = "remotesyncvalidate@gmail.com";
-                string senderPassword = "RemoteSync777";
+                string senderPassword = "aidb setv vykp bbik";
                 string error = "";
                 try
                 {
@@ -92,36 +93,36 @@ namespace RemoteSync
                         Credentials = new NetworkCredential(senderEmail, senderPassword),
                         EnableSsl = true,
                     };
-                    smtpClient.Send(senderEmail, this.email, "Validation code", $"Your validation code is {number}");
+                    smtpClient.Send(senderEmail, this.email, "Validation code", $"Your validation code is {codeToCheck}");
                     error = "Email sent successfully!";
                 }
                 catch (SmtpException ex)
                 {
                     error = "SMTP error occurred: " + ex.Message;
+                    verify = false;
                 }
                 catch (InvalidOperationException ex)
                 {
                     error = "Invalid operation: " + ex.Message;
+                    verify = false;
                 }
                 catch (ArgumentException ex)
                 {
                     error = "Argument error: " + ex.Message;
+                    verify = false;
                 }
                 catch (Exception ex)
                 {
                     error = "An error occurred: " + ex.Message;
+                    verify = false;
                 }
-                New_Error_Window(error);
+                //New_Error_Window(error);
             }
+
             if (verify)
             {
-                collection.InsertOne(new BsonDocument { { "username", this.username }, { "password", this.password }, { "email", this.email} });
-                
-                string error = "Document inserted successfully!";
-                New_Error_Window(error);
-                
-                LogIn login = new LogIn();
-                this.NavigationService.Navigate(login);
+                Verify verifyWindow = new Verify(codeToCheck, this.username, this.password, this.email);
+                this.NavigationService.Navigate(verifyWindow);
             }
         }
 

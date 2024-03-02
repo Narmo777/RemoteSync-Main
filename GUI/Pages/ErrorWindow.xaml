@@ -5,7 +5,8 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:RemoteSync"
         mc:Ignorable="d"
-        Title="ErrorWindow" Height="250" Width="300" Background="White">
+        Title="ErrorWindow" Height="250" Width="300" Background="White"
+        WindowStartupLocation="CenterScreen">
     <Grid>
         <TextBlock x:Name="ErrorWin" TextWrapping="Wrap" VerticalAlignment="Center" Height="150" Width="250" FontWeight="Bold" FontSize="20" />
 
