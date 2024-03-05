@@ -159,6 +159,7 @@
     </Page>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="MongoDB\MongoDBfunctions.cs" />
     <Compile Include="Pages\ErrorWindow.xaml.cs">
       <DependentUpon>ErrorWindow.xaml</DependentUpon>
     </Compile>

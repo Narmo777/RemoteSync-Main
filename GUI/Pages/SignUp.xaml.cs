@@ -23,6 +23,7 @@ using System.Windows.Shapes;
 using System.Net.Mime;
 using GUI.Pages;
 using System.Collections;
+using GUI.MongoDB;
 
 namespace RemoteSync
 {
@@ -48,10 +49,12 @@ namespace RemoteSync
         }
         private void SignUp_Click(object sender, RoutedEventArgs e)
         {
-            MongoClient dbClient = new MongoClient("mongodb+srv://Nimrod:NimrodBenHamo85@cluster0.nvpsjki.mongodb.net/");
-            var db = dbClient.GetDatabase("LoginSystem");
-            var collection = db.GetCollection<BsonDocument>("UserInfo");
+            //MongoClient dbClient = new MongoClient("mongodb+srv://Nimrod:NimrodBenHamo85@cluster0.nvpsjki.mongodb.net/");
+            //var db = dbClient.GetDatabase("LoginSystem");
+            //var collection = db.GetCollection<BsonDocument>("UserInfo");
+            var collection = MongoDBfunctions.GetUserInfoCollection();
             bool verify = true;
+            bool existingUser = MongoDBfunctions.IsUsernameExists(this.username, collection);
             //need to check all info is diffrent from null and from other users
             //only then insert to db
             //check that password is equal to password2 
@@ -61,22 +64,29 @@ namespace RemoteSync
                 string error = "passwords does not match";
                 New_Error_Window(error);
             }
-            var existingUser = collection.Find(new BsonDocument("username", this.username)).FirstOrDefault();
-            if (existingUser != null)
+            //var existingUser = collection.Find(new BsonDocument("username", this.username)).FirstOrDefault();
+
+            else if (existingUser)
             {
                 //username exists, new user can't be inserted
                 verify = false;
                 string error = "Username already exists. Choose a different username.";
                 New_Error_Window(error);
             }
-            if (!IsEmailValid(this.email))
+            else if (!IsUsernameValid(this.username))
+            {
+                verify = false;
+                string error = "Username cannot contain spaces";
+                New_Error_Window(error);
+            }
+            else if (!IsEmailValid(this.email))
             {
                 verify = false;
                 string error = "Invalid email address";
                 New_Error_Window(error);
             }
-            int codeToCheck = new Random().Next(100, 1000);
-            if (IsEmailValid(this.email))
+            int codeToCheck = new Random().Next(1000, 10000);
+            if (IsEmailValid(this.email) && verify)
             {
                 //if email is valid, send a code and validate
 
@@ -121,7 +131,7 @@ namespace RemoteSync
 
             if (verify)
             {
-                Verify verifyWindow = new Verify(codeToCheck, this.username, this.password, this.email);
+                Verify verifyWindow = new Verify(codeToCheck, this.username, this.password, this.email, "NEW");
                 this.NavigationService.Navigate(verifyWindow);
             }
         }
@@ -180,6 +190,29 @@ namespace RemoteSync
             }
 
             return valid;
+        }
+        private static bool IsUsernameValid(string username)
+        {
+            // Check for spaces
+            if (username.Contains(" "))
+            {
+                return false;
+            }
+
+            //// Check for numbers
+            //if (Regex.IsMatch(username, @"\d"))
+            //{
+            //    return false;
+            //}
+
+            //// Check for at least one capital letter
+            //if (!Regex.IsMatch(username, @"[A-Z]"))
+            //{
+            //    return false;
+            //}
+
+            // If all conditions pass, return true
+            return true;
         }
     }
 }

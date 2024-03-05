@@ -1,4 +1,5 @@
-﻿using MongoDB.Bson;
+﻿using GUI.MongoDB;
+using MongoDB.Bson;
 using MongoDB.Driver;
 using RemoteSync;
 using System;
@@ -31,13 +32,15 @@ namespace GUI.Pages
         private string username;
         private string password;
         private string email;
+        private string func;
 
-        public Verify(int codeToCheck, string username, string password, string email)
+        public Verify(int codeToCheck, string username, string password, string email, string func)
         {
             this.codeToCheck = codeToCheck;
             this.username = username;
             this.password = password;
             this.email = email;
+            this.func = func;
             InitializeComponent();
         }
 
@@ -56,30 +59,52 @@ namespace GUI.Pages
         {
             ErrorWindow errorWindow = new ErrorWindow();
             errorWindow.ErrorWin.Text = error;
+            errorWindow.WindowStartupLocation = WindowStartupLocation.CenterScreen;
             errorWindow.Show();
         }
 
         private void Enter_Click(object sender, RoutedEventArgs e)
         {
-            if(int.Parse(codeEntered) == codeToCheck)
+            if(this.func == "NEW")
             {
-                MongoClient dbClient = new MongoClient("mongodb+srv://Nimrod:NimrodBenHamo85@cluster0.nvpsjki.mongodb.net/");
-                var db = dbClient.GetDatabase("LoginSystem");
-                var collection = db.GetCollection<BsonDocument>("UserInfo");
+                if (int.Parse(codeEntered) == codeToCheck)
+                {
+                    var collection = MongoDBfunctions.GetUserInfoCollection();
 
-                collection.InsertOne(new BsonDocument { { "username", this.username }, { "password", this.password }, { "email", this.email } });
+                    MongoDBfunctions.InsertUser(this.username, this.password, this.email, collection);
 
-                string error = "Welcome To RemoteSync!\nPlease Login again.";
-                New_Error_Window(error);
+                    string error = "Welcome To RemoteSync!\nPlease Login again.";
+                    New_Error_Window(error);
 
-                LogIn login = new LogIn();
-                this.NavigationService.Navigate(login);
+                    LogIn login = new LogIn();
+                    this.NavigationService.Navigate(login);
+                }
+                else
+                {
+                    string error = "code dosent match";
+                    New_Error_Window(error);
+                }
             }
-            else
+            if(this.func == "RESET")
             {
-                string error = "code dosent match";
-                New_Error_Window(error);
+                if (int.Parse(codeEntered) == codeToCheck)
+                {
+                    var collection = MongoDBfunctions.GetUserInfoCollection();
+                    MongoDBfunctions.ChangePassword(username, password, collection);
+
+                    string error = "Password chenged!\nPlease Login again.";
+                    New_Error_Window(error);
+
+                    LogIn login = new LogIn();
+                    this.NavigationService.Navigate(login);
+                }
+                else
+                {
+                    string error = "code dosent match";
+                    New_Error_Window(error);
+                }
             }
+
         }
     }
 }

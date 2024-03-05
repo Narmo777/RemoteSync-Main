@@ -1,4 +1,5 @@
-﻿using MongoDB.Bson;
+﻿using GUI.MongoDB;
+using MongoDB.Bson;
 using MongoDB.Driver;
 using System;
 using System.Collections.Generic;
@@ -65,12 +66,10 @@ namespace RemoteSync
 
         private void LogIn_Click(object sender, RoutedEventArgs e)
         {
-            MongoClient dbClient = new MongoClient("mongodb+srv://Nimrod:NimrodBenHamo85@cluster0.nvpsjki.mongodb.net/");
-            var db = dbClient.GetDatabase("LoginSystem");
-            var collection = db.GetCollection<BsonDocument>("UserInfo");
+            var collection = MongoDBfunctions.GetUserInfoCollection();
 
-            var existingUser = collection.Find(new BsonDocument { { "username", this.username }, { "password", this.password } }).FirstOrDefault();
-            if (existingUser != null)
+            bool existingUser = MongoDBfunctions.IsUserSignedUp(this.username, this.password, collection);
+            if (existingUser)
             {
                 //connect to server
                 //move to main page
