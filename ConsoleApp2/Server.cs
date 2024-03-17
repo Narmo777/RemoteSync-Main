@@ -16,6 +16,7 @@ namespace Server
     public class Server
     {
         private TcpListener listener;
+        public static string GetLocalIPAddress() => Dns.GetHostEntry(Dns.GetHostName()).AddressList.First(ip => ip.AddressFamily == AddressFamily.InterNetwork).ToString();
         public const string IP = "127.0.0.1";
         public const int PORT = 300;
         public Server(string name, string technician)
@@ -24,14 +25,19 @@ namespace Server
             MongoClient dbClient = new MongoClient("mongodb+srv://Nimrod:NimrodBenHamo85@cluster0.nvpsjki.mongodb.net/");
             var db = dbClient.GetDatabase("LoginSystem");
             var collection = db.GetCollection<BsonDocument>("UserInfo");
-            
+
+            var document = new BsonDocument
+            {
+                { "name", name },
+                { "ip", GetLocalIPAddress() }
+            };
             var filter = Builders<BsonDocument>.Filter.Eq("username", technician);
-            var update = Builders<BsonDocument>.Update.PushEach("client", new BsonArray { name }, position: 0);
+            var update = Builders<BsonDocument>.Update.PushEach("client", new BsonArray { document}, position: 0);
 
             collection.UpdateOne(filter, update);
         }
 
-    public async Task Start()
+        public async Task Start()
         {
             var ip = IPAddress.Parse(IP);
             this.listener = new TcpListener(ip, PORT);
