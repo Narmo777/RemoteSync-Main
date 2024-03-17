@@ -66,9 +66,8 @@ namespace RemoteSync
 
         private void LogIn_Click(object sender, RoutedEventArgs e)
         {
-            var collection = MongoDBfunctions.GetUserInfoCollection();
 
-            bool existingUser = MongoDBfunctions.IsUserSignedUp(this.username, this.password, collection);
+            bool existingUser = MongoDBfunctions.IsUserSignedUp(this.username, this.password);
             if (existingUser)
             {
                 //connect to server

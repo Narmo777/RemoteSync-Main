@@ -7,6 +7,8 @@ using System.Diagnostics;
 using System.Net.Sockets;
 using System.Net;
 using Protocol;
+using MongoDB.Bson;
+using MongoDB.Driver;
 
 namespace Server
 {
@@ -16,11 +18,20 @@ namespace Server
         private TcpListener listener;
         public const string IP = "127.0.0.1";
         public const int PORT = 300;
-        public Server()
+        public Server(string name, string technician)
         {
+            //connect to mongoDB and add to cluster
+            MongoClient dbClient = new MongoClient("mongodb+srv://Nimrod:NimrodBenHamo85@cluster0.nvpsjki.mongodb.net/");
+            var db = dbClient.GetDatabase("LoginSystem");
+            var collection = db.GetCollection<BsonDocument>("UserInfo");
+            
+            var filter = Builders<BsonDocument>.Filter.Eq("username", technician);
+            var update = Builders<BsonDocument>.Update.PushEach("client", new BsonArray { name }, position: 0);
+
+            collection.UpdateOne(filter, update);
         }
 
-        public async Task Start()
+    public async Task Start()
         {
             var ip = IPAddress.Parse(IP);
             this.listener = new TcpListener(ip, PORT);

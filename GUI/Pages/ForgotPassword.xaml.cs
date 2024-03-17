@@ -64,9 +64,8 @@ namespace RemoteSync
         
         private void ResetPassword_Click(object sender, RoutedEventArgs e)
         {
-            var collection = MongoDBfunctions.GetUserInfoCollection();
             int codeToCheck = new Random().Next(1000, 10000);
-            if (MongoDBfunctions.IsUsernameExists(username, email, collection))
+            if (MongoDBfunctions.IsUsernameExists(username, email))
             {
                 
                 // Sender's email address and password

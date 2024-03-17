@@ -52,9 +52,8 @@ namespace RemoteSync
             //MongoClient dbClient = new MongoClient("mongodb+srv://Nimrod:NimrodBenHamo85@cluster0.nvpsjki.mongodb.net/");
             //var db = dbClient.GetDatabase("LoginSystem");
             //var collection = db.GetCollection<BsonDocument>("UserInfo");
-            var collection = MongoDBfunctions.GetUserInfoCollection();
             bool verify = true;
-            bool existingUser = MongoDBfunctions.IsUsernameExists(this.username, collection);
+            bool existingUser = MongoDBfunctions.IsUsernameExists(this.username);
             //need to check all info is diffrent from null and from other users
             //only then insert to db
             //check that password is equal to password2 

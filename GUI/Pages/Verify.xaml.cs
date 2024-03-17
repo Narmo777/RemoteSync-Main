@@ -69,9 +69,7 @@ namespace GUI.Pages
             {
                 if (int.Parse(codeEntered) == codeToCheck)
                 {
-                    var collection = MongoDBfunctions.GetUserInfoCollection();
-
-                    MongoDBfunctions.InsertUser(this.username, this.password, this.email, collection);
+                    MongoDBfunctions.InsertUser(this.username, this.password, this.email);
 
                     string error = "Welcome To RemoteSync!\nPlease Login again.";
                     New_Error_Window(error);
@@ -89,8 +87,7 @@ namespace GUI.Pages
             {
                 if (int.Parse(codeEntered) == codeToCheck)
                 {
-                    var collection = MongoDBfunctions.GetUserInfoCollection();
-                    MongoDBfunctions.ChangePassword(username, password, collection);
+                    MongoDBfunctions.ChangePassword(username, password);
 
                     string error = "Password chenged!\nPlease Login again.";
                     New_Error_Window(error);
