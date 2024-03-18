@@ -9,6 +9,7 @@ using System.Net;
 using Protocol;
 using MongoDB.Bson;
 using MongoDB.Driver;
+using ConsoleApp2.MongoDB;
 
 namespace Server
 {
@@ -21,20 +22,9 @@ namespace Server
         public const int PORT = 300;
         public Server(string name, string technician)
         {
-            //connect to mongoDB and add to cluster
-            MongoClient dbClient = new MongoClient("mongodb+srv://Nimrod:NimrodBenHamo85@cluster0.nvpsjki.mongodb.net/");
-            var db = dbClient.GetDatabase("LoginSystem");
-            var collection = db.GetCollection<BsonDocument>("UserInfo");
+            string IP = GetLocalIPAddress();
 
-            var document = new BsonDocument
-            {
-                { "name", name },
-                { "ip", GetLocalIPAddress() }
-            };
-            var filter = Builders<BsonDocument>.Filter.Eq("username", technician);
-            var update = Builders<BsonDocument>.Update.PushEach("client", new BsonArray { document}, position: 0);
-
-            collection.UpdateOne(filter, update);
+            MongoDBfunctions.InsertNewClient(technician, name, IP);
         }
 
         public async Task Start()
