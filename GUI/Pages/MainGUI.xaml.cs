@@ -39,7 +39,14 @@ namespace RemoteSync
             InitializeComponent();
             InitTimer();
         }
-
+        public void Comp_Click(object sender, RoutedEventArgs e)
+        {
+            TabItem newComputer = new TabItem
+            {
+                Header = "temp",
+            };
+            ComputerTabs.Items.Add(newComputer);
+        }
         private async void Get_Click(object sender, RoutedEventArgs e)
         {
             var baseMsg = new Packet(RequestType.Get, "");
@@ -58,25 +65,13 @@ namespace RemoteSync
         {
 
         }
-        //צריך למצוא איך מוסיפים עוד טאב 
-        //כרגע המערך currentClientList מתעדכן כל הזמן
-        //זאת אומרת שצריך למצוא דרך לעבור על אותו מערך ולהוסיף טאב לפי זה 
-        //הדרך הכי כדאית זה ליצור פעולה שתוסיף טאב, ואז כל פעם לזמן אותה בתוך הפעולה 
-        //RefreshClientsAsync
+
         //אחר כך צריך ליצור משתנה שכל פעם שעוברים בין טאב לטאב הוא ישתנה בהתאם
         //אותו משתנה ישמש כדי שנדע מול איזה לקוח אנחנו מדברים
         //לפי אותו משתנה נצטרך להבין לאיזה לקוח שולחים את הבקשות
         //זה ישפיע על כל הפעולות שנמצאות למטה מתחת ל
         //"refresh and helpers"
 
-        public void Comp_Click(object sender, RoutedEventArgs e)
-        {
-            TabItem newComputer = new TabItem
-            {
-                Header = "temp",
-            };
-            ComputerTabs.Items.Add(newComputer);
-        }
 
         //search box
         private string search = "";
@@ -193,62 +188,68 @@ namespace RemoteSync
         }
 
         //refresh the clients
+        public static TabControl CmpTabs;
+        private void ComputerTabs_Loaded(object sender, RoutedEventArgs e)
+        {
+            CmpTabs = (sender as TabControl);
+        }
 
-        //public static void RefreshClients(string username)
-        //{
-        //    var serverClientList = new List<Tuple<string, string>>();
-        //    serverClientList = MongoDBfunctions.GetAllClients(username);
-
-        //    //צריך לעבור על כל הטאבים שיש, ולבדוק לפי שם איזה טאבים להוסיף 
-        //    bool exists = false;
-        //    foreach (var tuple in serverClientList)
-        //    {
-        //        foreach (var client in currentClientList)
-        //        {
-        //            //check if ip is equal, in order to allow mulitple clients with the same name
-        //            if (client.Item2 == tuple.Item2)
-        //            {
-        //                exists = true;
-        //            }
-        //        }
-        //        if (exists == false)
-        //        {
-        //            //add the client to clientsArray
-        //            currentClientList.Add(tuple);
-        //            clientsNumber++;
-        //            exists = false;
-        //        }
-        //    }
-        //}
-
-        //setting timer for refresh
         public static async Task RefreshClientsAsync(string username)
         {
             var serverClientList = await MongoDBfunctions.GetAllClientsAsync(username);
+            bool exist = false;
 
-            bool exists = false;
-            foreach (var tuple in serverClientList)
+            if (clientsNumber == 0)
             {
-                foreach (var client in currentClientList)
-                {
-                    if (client.Item2 == tuple.Item2)
-                    {
-                        exists = true;
-                        break; // No need to continue if already found
-                    }
-                }
-
-                if (!exists)
+                //client list is empty, add all of the client from mongo
+                foreach(var tuple in serverClientList)
                 {
                     currentClientList.Add(tuple);
                     clientsNumber++;
-                    
-                }
+                    //add here the new tab for the client
+                    TabItem newTabItem = new TabItem
+                    {
+                        Header = tuple.Item1.ToString(),
+                        Name = "temp"
+                    };
+                    CmpTabs.Items.Add(newTabItem);
 
-                exists = false;
+                    clientsNumber++;
+                }
             }
+            else
+            {
+                foreach (var tuple in serverClientList)
+                {
+                    foreach (var client in currentClientList)
+                    {
+                        if(client.Item2 == tuple.Item2)
+                        {
+                            exist = true;
+                            break;
+                        }
+                    }
+                    if(exist == false)
+                    {
+                        //the current client is not inside the tabs, so we will add it
+                        currentClientList.Add(tuple);
+                        clientsNumber++;
+                        //add here the new tab for the client
+                        TabItem newTabItem = new TabItem
+                        {
+                            Header = tuple.Item1,
+                            Name = tuple.Item2
+                        };
+                        CmpTabs.Items.Add(newTabItem);
+
+                        clientsNumber++;
+                    }
+                }
+            }                      
         }
 
+
+        //setting timer for refresh
         private DispatcherTimer timer;
         public void InitTimer()
         {
