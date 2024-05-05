@@ -18,7 +18,8 @@ namespace Server
     {
         private TcpListener listener;
         public static string GetLocalIPAddress() => Dns.GetHostEntry(Dns.GetHostName()).AddressList.First(ip => ip.AddressFamily == AddressFamily.InterNetwork).ToString();
-        public const string IP = "127.0.0.1";
+        //public const string IP = "127.0.0.1";
+        public string IP = GetLocalIPAddress();
         public const int PORT = 300;
         public Server(string name, string technician)
         {
@@ -53,7 +54,6 @@ namespace Server
         {
             try
             {
-
                 using (client)
                 {
                     var stream = client.GetStream();
@@ -74,7 +74,6 @@ namespace Server
                         await Console.Out.WriteLineAsync($"wrote {responcePacket.GetContentAsString()}");
                         
                         stream.Close();
-                        //MongoDBfunctionsServer.InsertNewClient("nimrod ", "0", "0");
                     }
                 }
 

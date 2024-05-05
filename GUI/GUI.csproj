@@ -217,13 +217,9 @@
     <Content Include="mongocrypt.dll" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Client\Client.csproj">
-      <Project>{9f1cfecf-6999-44e6-b701-f2722dd1a4d4}</Project>
-      <Name>Client</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\ConsoleApp2\ConsoleApp2.csproj">
+    <ProjectReference Include="..\ConsoleApp2\Client.csproj">
       <Project>{816b86e4-6f98-40e5-b606-31a3f3f4fd4f}</Project>
-      <Name>ConsoleApp2</Name>
+      <Name>Client</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

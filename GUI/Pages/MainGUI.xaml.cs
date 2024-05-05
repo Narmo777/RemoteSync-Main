@@ -13,7 +13,6 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
-using Client;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
@@ -31,8 +30,9 @@ namespace RemoteSync
     public partial class MainGUI : Page
     {
         private string technicianUsername;
-        public static List<Tuple<string, string>> currentClientList = new List<Tuple<string, string>>();
+        public static List<Tuple<string, string,int>> currentClientList = new List<Tuple<string, string, int>>();
         public static int clientsNumber = 0;
+        private static int clientIndex;
         public MainGUI(string name)
         {
             technicianUsername = name;
@@ -50,28 +50,40 @@ namespace RemoteSync
         private async void Get_Click(object sender, RoutedEventArgs e)
         {
             var baseMsg = new Packet(RequestType.Get, "");
-            await Connect(Server.Server.IP, 300, baseMsg);
+            await Connect(GetCurrentIP(), 300, baseMsg);
             
         }
         private async void Kill_Click(object sender, RoutedEventArgs e)
         {
             var selectedId = this.id;
             skipOneTime = true;
-            MainListBox.SelectedItem = null;
+            GetCurrentListBox().SelectedItem = null;
             var baseMsg = new Packet(RequestType.Kill, selectedId);
-            await Connect(Server.Server.IP, 300, baseMsg);            
+            await Connect(GetCurrentIP(), 300, baseMsg);            
         }
         private void Rsc_Click(object sender, RoutedEventArgs e)
         {
 
         }
 
-        //אחר כך צריך ליצור משתנה שכל פעם שעוברים בין טאב לטאב הוא ישתנה בהתאם
-        //אותו משתנה ישמש כדי שנדע מול איזה לקוח אנחנו מדברים
-        //לפי אותו משתנה נצטרך להבין לאיזה לקוח שולחים את הבקשות
-        //זה ישפיע על כל הפעולות שנמצאות למטה מתחת ל
-        //"refresh and helpers"
+        //change index when going through tabs
+        private void TabSelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            string tabHeader = "";
+            if (ComputerTabs.SelectedItem is TabItem selectedTab)
+            {
+                // Retrieve the header of the selected TabItem
+                tabHeader = selectedTab.Header?.ToString();
+            }
 
+            foreach (var client in currentClientList)
+            {
+                if(client.Item1 == tabHeader)
+                {
+                    clientIndex = client.Item3;
+                }
+            }
+        }
 
         //search box
         private string search = "";
@@ -127,7 +139,7 @@ namespace RemoteSync
             }
             else
             {
-                var selectedProcces = MainListBox.SelectedItem.ToString();
+                var selectedProcces = GetCurrentListBox().SelectedItem.ToString();
                 string[] procces = selectedProcces.Split(',', '(');
                 var proccesId = procces[1];
 
@@ -138,7 +150,7 @@ namespace RemoteSync
         //refresh and helpers
         public static async Task<Packet> SendRequest(Packet p)
         {
-            using (var clinet = new TcpClient(Server.Server.IP, Server.Server.PORT))
+            using (var clinet = new TcpClient(GetCurrentIP(), Server.Server.PORT))
             {
                 using (var stream = clinet.GetStream())
                 {
@@ -158,30 +170,32 @@ namespace RemoteSync
         }
         private void UpdateProcessList(List<(int, string)> newProcesses)
         {
+            ListBox currentlistbox = GetCurrentListBox();
             foreach (var newItem in newProcesses)
             {
-                if (!MainListBox.Items.Cast<(int, string)>().Any(existingItem => existingItem.Item1 == newItem.Item1))
+                //change the Mainlistbox to the listbox of the client tab
+                if (!currentlistbox.Items.Cast<(int, string)>().Any(existingItem => existingItem.Item1 == newItem.Item1))
                 {
-                    MainListBox.Items.Add(newItem);
+                    currentlistbox.Items.Add(newItem);
                 }
             }
 
             // Remove items that no longer exist
-            foreach (var existingItem in MainListBox.Items.Cast<(int, string)>().ToList())
+            foreach (var existingItem in currentlistbox.Items.Cast<(int, string)>().ToList())
             {
                 if (!newProcesses.Contains(existingItem))
                 {
-                    MainListBox.Items.Remove(existingItem);
+                    currentlistbox.Items.Remove(existingItem);
                 }
                 if (existingItem.ToString().Contains("GUI")) //remove my app from the listbox
                 {
-                    MainListBox.Items.Remove(existingItem);
+                    currentlistbox.Items.Remove(existingItem);
                 }
                 if (search != "")
                 {
                     if (!existingItem.ToString().Contains(search))
                     {
-                        MainListBox.Items.Remove(existingItem);
+                        currentlistbox.Items.Remove(existingItem);
                     }
                 }
             }
@@ -209,12 +223,15 @@ namespace RemoteSync
                     //add here the new tab for the client
                     TabItem newTabItem = new TabItem
                     {
-                        Header = tuple.Item1.ToString(),
-                        Name = "temp"
+                        Header = tuple.Item1.ToString()                        
                     };
+                    ListBox listbox = new ListBox();
+                    listbox.Name = tuple.Item1.ToString()+"_listbox";
+                    listbox.Height = 600;
+
+                    newTabItem.Content = listbox;
                     CmpTabs.Items.Add(newTabItem);
 
-                    clientsNumber++;
                 }
             }
             else
@@ -242,7 +259,6 @@ namespace RemoteSync
                         };
                         CmpTabs.Items.Add(newTabItem);
 
-                        clientsNumber++;
                     }
                 }
             }                      
@@ -262,6 +278,35 @@ namespace RemoteSync
             timer.Start();
         }
 
+        public static string GetCurrentIP()
+        {
+            string currentClientIP = "";
+            foreach (var client in currentClientList)
+            {
+                if (client.Item3 == clientIndex)
+                    currentClientIP = client.Item2;
+            }
 
+            return currentClientIP;
+        }
+        public ListBox GetCurrentListBox()
+        {
+            ListBox currentlistbox = new ListBox();
+            string targetHeader = "";
+            foreach (var client in currentClientList)
+            {
+                if (client.Item3 == clientIndex)
+                    targetHeader = client.Item1;
+            }
+            foreach (var item in ComputerTabs.Items)
+            {
+                if (item is TabItem tabItem && tabItem.Header != null && tabItem.Header.ToString() == targetHeader)
+                {
+                    currentlistbox = tabItem.Content as ListBox;
+                }
+            }
+
+            return currentlistbox;
+        }
     }
 }
