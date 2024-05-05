@@ -20,6 +20,8 @@ using System.Diagnostics;
 using System.Threading;
 using System.Timers;
 using System.Windows.Threading;
+using ConsoleApp2.MongoDB;
+using GUI.MongoDB;
 
 namespace RemoteSync
 {
@@ -28,8 +30,12 @@ namespace RemoteSync
     /// </summary>
     public partial class MainGUI : Page
     {
-        public MainGUI()
+        private string technicianUsername;
+        public static List<Tuple<string, string>> currentClientList = new List<Tuple<string, string>>();
+        public static int clientsNumber = 0;
+        public MainGUI(string name)
         {
+            technicianUsername = name;
             InitializeComponent();
             InitTimer();
         }
@@ -48,19 +54,43 @@ namespace RemoteSync
             var baseMsg = new Packet(RequestType.Kill, selectedId);
             await Connect(Server.Server.IP, 300, baseMsg);            
         }
-
         private void Rsc_Click(object sender, RoutedEventArgs e)
         {
 
         }
-        private void Comp_Click(object sender, RoutedEventArgs e)
+        //צריך למצוא איך מוסיפים עוד טאב 
+        //כרגע המערך currentClientList מתעדכן כל הזמן
+        //זאת אומרת שצריך למצוא דרך לעבור על אותו מערך ולהוסיף טאב לפי זה 
+        //הדרך הכי כדאית זה ליצור פעולה שתוסיף טאב, ואז כל פעם לזמן אותה בתוך הפעולה 
+        //RefreshClientsAsync
+        //אחר כך צריך ליצור משתנה שכל פעם שעוברים בין טאב לטאב הוא ישתנה בהתאם
+        //אותו משתנה ישמש כדי שנדע מול איזה לקוח אנחנו מדברים
+        //לפי אותו משתנה נצטרך להבין לאיזה לקוח שולחים את הבקשות
+        //זה ישפיע על כל הפעולות שנמצאות למטה מתחת ל
+        //"refresh and helpers"
+
+        public void Comp_Click(object sender, RoutedEventArgs e)
         {
             TabItem newComputer = new TabItem
             {
-                Header = "computer 3"
+                Header = "temp",
             };
             ComputerTabs.Items.Add(newComputer);
         }
+
+        //search box
+        private string search = "";
+        private void SearchBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (Search.Text != "Search")
+                this.search = Search.Text;
+        }
+        private void SearchTextBox_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            if (Search.Text == "Search")
+                Search.Text = string.Empty;
+        }
+
         //connect the gui to the server
         public async Task Connect(string ip, int port, Packet p)
         {
@@ -162,7 +192,63 @@ namespace RemoteSync
             }
         }
 
+        //refresh the clients
+
+        //public static void RefreshClients(string username)
+        //{
+        //    var serverClientList = new List<Tuple<string, string>>();
+        //    serverClientList = MongoDBfunctions.GetAllClients(username);
+
+        //    //צריך לעבור על כל הטאבים שיש, ולבדוק לפי שם איזה טאבים להוסיף 
+        //    bool exists = false;
+        //    foreach (var tuple in serverClientList)
+        //    {
+        //        foreach (var client in currentClientList)
+        //        {
+        //            //check if ip is equal, in order to allow mulitple clients with the same name
+        //            if (client.Item2 == tuple.Item2)
+        //            {
+        //                exists = true;
+        //            }
+        //        }
+        //        if (exists == false)
+        //        {
+        //            //add the client to clientsArray
+        //            currentClientList.Add(tuple);
+        //            clientsNumber++;
+        //            exists = false;
+        //        }
+        //    }
+        //}
+
         //setting timer for refresh
+        public static async Task RefreshClientsAsync(string username)
+        {
+            var serverClientList = await MongoDBfunctions.GetAllClientsAsync(username);
+
+            bool exists = false;
+            foreach (var tuple in serverClientList)
+            {
+                foreach (var client in currentClientList)
+                {
+                    if (client.Item2 == tuple.Item2)
+                    {
+                        exists = true;
+                        break; // No need to continue if already found
+                    }
+                }
+
+                if (!exists)
+                {
+                    currentClientList.Add(tuple);
+                    clientsNumber++;
+                    
+                }
+
+                exists = false;
+            }
+        }
+
         private DispatcherTimer timer;
         public void InitTimer()
         {
@@ -170,23 +256,9 @@ namespace RemoteSync
             timer = new DispatcherTimer();
             timer.Interval = TimeSpan.FromMilliseconds(1000); // Set the interval to 1000 milliseconds = 1 second
             timer.Tick += async (sender, e) => await RefreshScreenFromServer();
-
+            timer.Tick += async (sender, e) => await RefreshClientsAsync(technicianUsername);
             // Start the timer
             timer.Start();
-        }
-
-
-        //search box
-        private string search = "";
-        private void SearchBox_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            if (Search.Text != "Search")
-                this.search = Search.Text;
-        }
-        private void SearchTextBox_MouseDown(object sender, MouseButtonEventArgs e)
-        {
-            if (Search.Text == "Search")
-                Search.Text = string.Empty;
         }
 
 

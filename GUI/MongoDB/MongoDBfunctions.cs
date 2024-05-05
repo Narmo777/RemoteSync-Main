@@ -67,5 +67,76 @@ namespace GUI.MongoDB
 
             collection.UpdateOne(filter, update);
         }
+        //public static List<Tuple<string, string>> GetAllClients(string username)
+        //{
+        //    var db = dbClient.GetDatabase("LoginSystem");
+        //    var collection = db.GetCollection<BsonDocument>("UserInfo");
+
+        //    BsonDocument userClients = collection.Find(new BsonDocument { { "username", username } }).FirstOrDefault();
+
+        //    // Assuming userClients is already assigned the document
+        //    BsonArray clientArray = userClients.GetValue("client").AsBsonArray;
+
+        //    // Define the tuple type
+        //    var clientTuplesList = new List<Tuple<string, string>>();
+        //    if (clientArray != null)
+        //    {
+        //        // Loop through each client object in the array
+        //        foreach (BsonDocument clientDoc in clientArray)
+        //        {
+        //            string clientName = clientDoc.GetValue("name").ToString();
+        //            string clientIp = clientDoc.GetValue("ip").ToString();
+
+        //            // Add a tuple to the list
+        //            clientTuplesList.Add(Tuple.Create(clientName, clientIp));
+        //        }
+        //    }
+        //    else
+        //    {
+        //        Console.WriteLine("Client array not found in the user data.");
+        //    }
+
+        //    return clientTuplesList;
+        //}
+        public static async Task<List<Tuple<string, string>>> GetAllClientsAsync(string username)
+        {
+            var db = dbClient.GetDatabase("LoginSystem");
+            var collection = db.GetCollection<BsonDocument>("UserInfo");
+
+            // Asynchronously find the document matching the username
+            BsonDocument userClients = await collection.Find(new BsonDocument { { "username", username } }).FirstOrDefaultAsync();
+
+            var clientTuplesList = new List<Tuple<string, string>>();
+
+            if (userClients != null)
+            {
+                // Extract the client array from the document
+                BsonArray clientArray = userClients.GetValue("client").AsBsonArray;
+
+                if (clientArray != null)
+                {
+                    // Loop through each client object in the array
+                    foreach (BsonDocument clientDoc in clientArray)
+                    {
+                        string clientName = clientDoc.GetValue("name").ToString();
+                        string clientIp = clientDoc.GetValue("ip").ToString();
+
+                        // Add a tuple to the list
+                        clientTuplesList.Add(Tuple.Create(clientName, clientIp));
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("Client array not found in the user data.");
+                }
+            }
+            else
+            {
+                Console.WriteLine($"User with username '{username}' not found.");
+            }
+
+            return clientTuplesList;
+        }
+
     }
 }

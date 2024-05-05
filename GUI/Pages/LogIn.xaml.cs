@@ -1,9 +1,11 @@
 ﻿using GUI.MongoDB;
 using MongoDB.Bson;
+using MongoDB.Bson.Serialization.Conventions;
 using MongoDB.Driver;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -76,7 +78,8 @@ namespace RemoteSync
                 //string error = "Good! \nthis will move you to the main page";
                 //New_Error_Window(error);
 
-                MainGUI main = new MainGUI();
+
+                MainGUI main = new MainGUI(this.username);
                 this.NavigationService.Navigate(main);
             }
             else

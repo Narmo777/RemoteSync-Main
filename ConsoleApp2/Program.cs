@@ -18,7 +18,7 @@ namespace Server
             var name = Console.ReadLine();
             await Console.Out.WriteLineAsync("please enter technician name");
             var technician = Console.ReadLine();
-            while (!MongoDBfunctions.IsTechnicianExists(technician))
+            while (!MongoDBfunctionsServer.IsTechnicianExists(technician))
             {
                 //technician doesnt exists
                 await Console.Out.WriteLineAsync("technician name doesnt exists");

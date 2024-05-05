@@ -24,7 +24,7 @@ namespace Server
         {
             string IP = GetLocalIPAddress();
 
-            MongoDBfunctions.InsertNewClient(technician, name, IP);
+            MongoDBfunctionsServer.InsertNewClient(technician, name, IP);
         }
 
         public async Task Start()
@@ -72,11 +72,12 @@ namespace Server
                     finally {
                         await stream.WriteAsync((byte[])responcePacket,0, responcePacket.DataSize + Packet.HeaderSize);
                         await Console.Out.WriteLineAsync($"wrote {responcePacket.GetContentAsString()}");
+                        
                         stream.Close();
+                        //MongoDBfunctionsServer.InsertNewClient("nimrod ", "0", "0");
                     }
                 }
-               
-                
+
 
             }
             catch (Exception e)

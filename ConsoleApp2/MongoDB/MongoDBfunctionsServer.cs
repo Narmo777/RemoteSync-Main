@@ -10,7 +10,7 @@ using System.Xml.Linq;
 
 namespace ConsoleApp2.MongoDB
 {
-    public class MongoDBfunctions
+    public class MongoDBfunctionsServer
     {
         private static MongoClient dbClient = new MongoClient("mongodb+srv://Nimrod:NimrodBenHamo85@cluster0.nvpsjki.mongodb.net/");
 
