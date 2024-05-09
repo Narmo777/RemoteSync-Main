@@ -14,7 +14,7 @@
         <Label Content="RemoteSync" HorizontalAlignment="Left" Margin="204,363,0,0" VerticalAlignment="Top" FontSize="22" FontWeight="Bold" FontStyle="Italic" Height="54" Width="151"/>
         <Image HorizontalAlignment="Left" Height="168" Margin="187,192,0,0" VerticalAlignment="Top" Width="172" Source="/GUI;component/Images/project-management.png"/>
         <Label Content="Verfiy" HorizontalAlignment="Left" Height="64" Margin="600,192,0,0" VerticalAlignment="Top" Width="174" FontSize="25" FontWeight="Bold"/>
-        <Button Content="Enter" HorizontalAlignment="Left" Height="44" Margin="560,505,0,0" VerticalAlignment="Top" Width="424" Click="Enter_Click" Background="Transparent" BorderBrush="{x:Null}" FontSize="17"/>
+        <Button Content="Enter" HorizontalAlignment="Left" Height="44" Margin="560,505,0,0" VerticalAlignment="Top" Width="424" Click="Enter_Click" Background="#FF1AEBB6" BorderBrush="{x:Null}" FontSize="17"/>
         
         <Label Content="Please enter your code" HorizontalAlignment="Left" Margin="562,276,0,0" VerticalAlignment="Top" FontWeight="Bold" FontSize="17"/>
         <TextBox Name="Code" HorizontalAlignment="Left" Margin="567,314,0,0" TextWrapping="Wrap" Text="your code" Opacity="0.5" FontSize="17" VerticalAlignment="Top" Width="120" TextChanged="Code_TextChanged" PreviewMouseDown="Code_MouseDown"/>

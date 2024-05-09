@@ -14,8 +14,8 @@
         <Label Content="RemoteSync" HorizontalAlignment="Left" Margin="204,363,0,0" VerticalAlignment="Top" FontSize="22" FontWeight="Bold" FontStyle="Italic" Height="54" Width="151"/>
         <Image HorizontalAlignment="Left" Height="168" Margin="187,192,0,0" VerticalAlignment="Top" Width="172" Source="/GUI;component/Images/project-management.png"/>
         <Label Content="Sign Up" HorizontalAlignment="Left" Height="64" Margin="630,130,0,0" VerticalAlignment="Top" Width="174" FontSize="25" FontWeight="Bold"/>
-        
-        <Button Content="SignUp" HorizontalAlignment="Left" Height="44" Margin="560,505,0,0" VerticalAlignment="Top" Width="424" Click="SignUp_Click" Background="Transparent" BorderBrush="{x:Null}" FontSize="17"/>
+
+        <Button Content="SignUp" HorizontalAlignment="Left" Height="44" Margin="560,505,0,0" VerticalAlignment="Top" Width="424" Click="SignUp_Click" Background="#FF1AEBB6" BorderBrush="{x:Null}" FontSize="17"/>
         <Label Content="Email" HorizontalAlignment="Left" Height="35" Margin="560,257,0,0" VerticalAlignment="Top" Width="87" FontWeight="Bold" FontSize="17"/>
         <TextBox Name="Email" HorizontalAlignment="Left" Height="34" Margin="560,292,0,0" Text="example@email.com" Opacity="0.5" TextWrapping="Wrap" VerticalAlignment="Top" Width="314" SelectionOpacity="1" FontSize="17" TextChanged="EmailTextBox_TextChanged" PreviewMouseDown="EmailTextBox_MouseDown"/>
         <Label Content="Password" HorizontalAlignment="Left" Height="36" Margin="560,326,0,0" VerticalAlignment="Top" Width="98" FontWeight="Bold" FontSize="17"/>
