@@ -21,6 +21,7 @@ using System.Timers;
 using System.Windows.Threading;
 using ConsoleApp2.MongoDB;
 using GUI.MongoDB;
+using System.Windows.Controls.Primitives;
 
 namespace RemoteSync
 {
@@ -33,12 +34,14 @@ namespace RemoteSync
         public static List<Tuple<string, string,int>> currentClientList = new List<Tuple<string, string, int>>();
         public static int clientsNumber = 0;
         private static int clientIndex;
+                
         public MainGUI(string name)
         {
             technicianUsername = name;
             InitializeComponent();
             InitTimer();
         }
+        
         public void Comp_Click(object sender, RoutedEventArgs e)
         {
             TabItem newComputer = new TabItem
@@ -165,8 +168,44 @@ namespace RemoteSync
         public async Task<List<(int, string)>> GetProcesscesFromServer() => (await SendRequest(new Packet(RequestType.Get, ""))).GetContentAsString().Split('#').Select(x => x.Split('|')).Select(x => (int.Parse(x[0]), x[1])).ToList();
         private async Task RefreshScreenFromServer()
         {
-            var newProcesses = await GetProcesscesFromServer();
-            Dispatcher.Invoke(() => UpdateProcessList(newProcesses));
+            try
+            {
+                var newProcesses = await GetProcesscesFromServer();
+                Dispatcher.Invoke(() => UpdateProcessList(newProcesses));
+            }
+            catch (Exception e)
+            {
+                ////go to the next tab
+                //int currentIndex = ComputerTabs.SelectedIndex;// Get the index of the currently selected tab                
+                //if(currentIndex == 0)
+                //{
+                //    ComputerTabs.Items.Clear();
+                //}
+                //else
+                //{
+                //    int newIndex = currentIndex--;// Calculate the index of the tab on the left
+                    
+                //    // Ensure the new index is within the valid range
+                //    if (newIndex >= 0)
+                //    {
+                //        ComputerTabs.SelectedIndex = newIndex;
+                //    }
+                //}
+
+                ////hide the tab that dosent work
+                //string tabHeader = "";
+                //if (ComputerTabs.SelectedItem is TabItem selectedTab)
+                //{
+                //    // Retrieve the header of the selected TabItem
+                //    tabHeader = selectedTab.Header?.ToString();
+                //    selectedTab.Visibility = Visibility.Collapsed;
+                //}
+                
+                ComputerTabs.SelectedItem = null;
+                //remove the tab that dosent work from mongodb
+                string clientIP = GetCurrentIP();
+                await MongoDBfunctionsServer.RemoveDisconnectedClientAsync(technicianUsername, clientIP);
+            }
         }
         private void UpdateProcessList(List<(int, string)> newProcesses)
         {
@@ -272,6 +311,12 @@ namespace RemoteSync
             // Initialize the timer
             timer = new DispatcherTimer();
             timer.Interval = TimeSpan.FromMilliseconds(1000); // Set the interval to 1000 milliseconds = 1 second
+            
+            //if(currentClientList.Count > 0)
+            //{
+            //    timer.Tick += async (sender, e) => await RefreshScreenFromServer();
+            //}
+
             timer.Tick += async (sender, e) => await RefreshScreenFromServer();
             timer.Tick += async (sender, e) => await RefreshClientsAsync(technicianUsername);
             // Start the timer

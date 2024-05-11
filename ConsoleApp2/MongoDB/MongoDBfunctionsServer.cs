@@ -1,4 +1,5 @@
-﻿using MongoDB.Bson;
+﻿using Amazon.Runtime.Documents;
+using MongoDB.Bson;
 using MongoDB.Driver;
 using System;
 using System.Collections.Generic;
@@ -43,6 +44,16 @@ namespace ConsoleApp2.MongoDB
             clientcount++;
 
             collection.UpdateOne(filter, update);
+        }
+        public static async Task RemoveDisconnectedClientAsync(string technician, string clientIP)
+        {
+            var db = dbClient.GetDatabase("LoginSystem");
+            var collection = db.GetCollection<BsonDocument>("UserInfo");
+
+            var filter = Builders<BsonDocument>.Filter.Eq("username", technician);
+            var update = Builders<BsonDocument>.Update.PullFilter("client", Builders<BsonDocument>.Filter.Eq("ip", clientIP));
+
+            await collection.UpdateOneAsync(filter, update);
         }
         public static int GetClientsCount(string username)
         {
