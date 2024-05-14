@@ -327,6 +327,7 @@ namespace RemoteSync
             timer.Tick += async (sender, e) => await RefreshScreenFromServer();
             timer.Tick += async (sender, e) => await RefreshClientsAsync(technicianUsername);
             // Start the timer
+
             timer.Start();
         }
 
