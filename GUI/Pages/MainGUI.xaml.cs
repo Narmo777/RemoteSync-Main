@@ -151,9 +151,9 @@ namespace RemoteSync
         }
 
         //refresh and helpers
-        public static async Task<Packet> SendRequest(Packet p)
+        public static async Task<Packet> SendRequest(Packet p, string IP)
         {
-            using (var clinet = new TcpClient(GetCurrentIP(), Server.Server.PORT))
+            using (var clinet = new TcpClient(IP, Server.Server.PORT))
             {
                 using (var stream = clinet.GetStream())
                 {
@@ -165,47 +165,59 @@ namespace RemoteSync
                 }
             }
         }
-        public async Task<List<(int, string)>> GetProcesscesFromServer() => (await SendRequest(new Packet(RequestType.Get, ""))).GetContentAsString().Split('#').Select(x => x.Split('|')).Select(x => (int.Parse(x[0]), x[1])).ToList();
+        public async Task<List<(int, string)>> GetProcesscesFromServer(string ip) => (await SendRequest(new Packet(RequestType.Get, ""), ip)).GetContentAsString().Split('#').Select(x => x.Split('|')).Select(x => (int.Parse(x[0]), x[1])).ToList();
         private async Task RefreshScreenFromServer()
         {
-            try
-            {
-                var newProcesses = await GetProcesscesFromServer();
-                Dispatcher.Invoke(() => UpdateProcessList(newProcesses));
-            }
-            catch (Exception e)
-            {
-                ////go to the next tab
-                //int currentIndex = ComputerTabs.SelectedIndex;// Get the index of the currently selected tab                
-                //if(currentIndex == 0)
-                //{
-                //    ComputerTabs.Items.Clear();
-                //}
-                //else
-                //{
-                //    int newIndex = currentIndex--;// Calculate the index of the tab on the left
-                    
-                //    // Ensure the new index is within the valid range
-                //    if (newIndex >= 0)
-                //    {
-                //        ComputerTabs.SelectedIndex = newIndex;
-                //    }
-                //}
 
-                ////hide the tab that dosent work
-                //string tabHeader = "";
-                //if (ComputerTabs.SelectedItem is TabItem selectedTab)
-                //{
-                //    // Retrieve the header of the selected TabItem
-                //    tabHeader = selectedTab.Header?.ToString();
-                //    selectedTab.Visibility = Visibility.Collapsed;
-                //}
-                
-                ComputerTabs.SelectedItem = null;
-                //remove the tab that dosent work from mongodb
-                string clientIP = GetCurrentIP();
-                await MongoDBfunctionsServer.RemoveDisconnectedClientAsync(technicianUsername, clientIP);
+            foreach(var client in currentClientList)
+            {
+                var name = client.Item1;
+                var ip = client.Item2;
+                var id = client.Item3;
+
+                try //try to update the process list for each client, if falied, client has disconnected
+                {
+                    var newProcesses = await GetProcesscesFromServer(ip);
+                    Dispatcher.Invoke(() => UpdateProcessList(newProcesses));
+                }
+                catch (Exception e)
+                {
+                    RemoveCurrentTab(name);
+                    await MongoDBfunctions.RemoveDisconnectedClientAsync(technicianUsername, ip);
+                }
+
             }
+
+            ////go to the next tab
+            //int currentIndex = ComputerTabs.SelectedIndex;// Get the index of the currently selected tab                
+            //if(currentIndex == 0)
+            //{
+            //    ComputerTabs.Items.Clear();
+            //}
+            //else
+            //{
+            //    int newIndex = currentIndex--;// Calculate the index of the tab on the left
+
+            //    // Ensure the new index is within the valid range
+            //    if (newIndex >= 0)
+            //    {
+            //        ComputerTabs.SelectedIndex = newIndex;
+            //    }
+            //}
+
+            ////hide the tab that dosent work
+            //string tabHeader = "";
+            //if (ComputerTabs.SelectedItem is TabItem selectedTab)
+            //{
+            //    // Retrieve the header of the selected TabItem
+            //    tabHeader = selectedTab.Header?.ToString();
+            //    selectedTab.Visibility = Visibility.Collapsed;
+            //}
+
+            //ComputerTabs.SelectedItem = null;
+            ////remove the tab that dosent work from mongodb
+            //string clientIP = GetCurrentIP();
+            //await MongoDBfunctionsServer.RemoveDisconnectedClientAsync(technicianUsername, clientIP);
         }
         private void UpdateProcessList(List<(int, string)> newProcesses)
         {
@@ -311,12 +323,7 @@ namespace RemoteSync
             // Initialize the timer
             timer = new DispatcherTimer();
             timer.Interval = TimeSpan.FromMilliseconds(1000); // Set the interval to 1000 milliseconds = 1 second
-            
-            //if(currentClientList.Count > 0)
-            //{
-            //    timer.Tick += async (sender, e) => await RefreshScreenFromServer();
-            //}
-
+                                                               
             timer.Tick += async (sender, e) => await RefreshScreenFromServer();
             timer.Tick += async (sender, e) => await RefreshClientsAsync(technicianUsername);
             // Start the timer
@@ -352,6 +359,16 @@ namespace RemoteSync
             }
 
             return currentlistbox;
+        }
+        public void RemoveCurrentTab(string Header)
+        {
+            foreach (var item in ComputerTabs.Items)
+            {
+                if (item is TabItem tabItem && tabItem.Header != null && tabItem.Header.ToString() == Header)
+                {
+                    ComputerTabs.Items.Remove(item);
+                }
+            }
         }
     }
 }
