@@ -15,7 +15,6 @@ namespace ConsoleApp2.MongoDB
     {
 
         private static MongoClient dbClient = new MongoClient("mongodb+srv://Nimrod:NimrodBenHamo85@cluster0.nvpsjki.mongodb.net/");
-        //private static MongoClient dbClient = new MongoClient("mongodb+srv://Nimrod:NimrodBenHamo85@cluster0.nvpsjki.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0");
 
         private static int clientcount = 0;
         public static bool IsTechnicianExists(string username)
