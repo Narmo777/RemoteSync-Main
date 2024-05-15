@@ -185,7 +185,6 @@ namespace RemoteSync
                     RemoveCurrentTab(name);
                     await MongoDBfunctions.RemoveDisconnectedClientAsync(technicianUsername, ip);
                 }
-
             }
 
             ////go to the next tab
@@ -318,16 +317,21 @@ namespace RemoteSync
 
         //setting timer for refresh
         private DispatcherTimer timer;
+        private DispatcherTimer ClientTimer;
         public void InitTimer()
         {
             // Initialize the timer
             timer = new DispatcherTimer();
             timer.Interval = TimeSpan.FromMilliseconds(1000); // Set the interval to 1000 milliseconds = 1 second
-                                                               
-            timer.Tick += async (sender, e) => await RefreshScreenFromServer();
-            timer.Tick += async (sender, e) => await RefreshClientsAsync(technicianUsername);
-            // Start the timer
+            
+            ClientTimer = new DispatcherTimer();
+            ClientTimer.Interval = TimeSpan.FromMilliseconds(800);
 
+            ClientTimer.Tick += async (sender, e) => await RefreshClientsAsync(technicianUsername);
+            timer.Tick += async (sender, e) => await RefreshScreenFromServer();
+
+            // Start the timer
+            ClientTimer.Start();
             timer.Start();
         }
 
@@ -361,14 +365,24 @@ namespace RemoteSync
 
             return currentlistbox;
         }
-        public void RemoveCurrentTab(string Header)
+        public void RemoveCurrentTab(string header)
         {
+            TabItem tabToRemove = null;
+
+            // Find the TabItem to remove based on the specified header
             foreach (var item in ComputerTabs.Items)
             {
-                if (item is TabItem tabItem && tabItem.Header != null && tabItem.Header.ToString() == Header)
+                if (item is TabItem tabItem && tabItem.Header != null && tabItem.Header.ToString() == header)
                 {
-                    ComputerTabs.Items.Remove(item);
+                    tabToRemove = tabItem;
+                    break; // Found the matching TabItem, exit the loop
                 }
+            }
+
+            // Remove the TabItem outside of the loop to avoid modifying the collection during iteration
+            if (tabToRemove != null)
+            {
+                ComputerTabs.Items.Remove(tabToRemove);
             }
         }
     }

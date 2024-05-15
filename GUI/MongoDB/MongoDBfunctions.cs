@@ -13,6 +13,7 @@ namespace GUI.MongoDB
     public class MongoDBfunctions
     {
         private static MongoClient dbClient = new MongoClient("mongodb+srv://Nimrod:NimrodBenHamo85@cluster0.nvpsjki.mongodb.net/");
+        //private static MongoClient dbClient = new MongoClient("mongodb+srv://Nimrod:NimrodBenHamo85@cluster0.nvpsjki.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0");
 
         //public static IMongoCollection<BsonDocument> GetUserInfoCollection()
         //{
