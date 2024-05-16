@@ -28,9 +28,7 @@
             </StackPanel>
 
             <TabControl x:Name="ComputerTabs" Loaded="ComputerTabs_Loaded" SelectionChanged="TabSelectionChanged" >
-                <!--<TabItem Header="computer 1">
-                    <ListBox x:Name="MainListBox" Height="600" d:ItemsSource="{d:SampleData ItemCount=5}" SelectionChanged="MainListBox_SelectionChanged" />
-                </TabItem>-->
+
             </TabControl>
 
         </StackPanel>

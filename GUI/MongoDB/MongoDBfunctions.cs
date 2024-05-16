@@ -13,6 +13,8 @@ namespace GUI.MongoDB
     public class MongoDBfunctions
     {
         private static MongoClient dbClient = new MongoClient("mongodb+srv://Nimrod:NimrodBenHamo85@cluster0.nvpsjki.mongodb.net/");
+        //private static MongoClient dbClient = new MongoClient("mongodb+srv://Narmod:NimrodBenHamo85@remotesync.wgwarwp.mongodb.net/?retryWrites=true&w=majority&appName=RemoteSync\r\n\r\n");
+
 
         //public static IMongoCollection<BsonDocument> GetUserInfoCollection()
         //{
@@ -56,7 +58,7 @@ namespace GUI.MongoDB
         {
             var db = dbClient.GetDatabase("LoginSystem");
             var collection = db.GetCollection<BsonDocument>("UserInfo");
-            collection.InsertOne(new BsonDocument { { "username", username }, { "password", password }, { "email", email } });
+            collection.InsertOne(new BsonDocument { { "username", username }, { "password", password }, { "email", email }, { "client", new BsonArray() } });
         }
         public static void ChangePassword(string user, string NewPassword)
         {

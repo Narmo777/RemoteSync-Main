@@ -69,24 +69,7 @@ namespace RemoteSync
 
         }
 
-        //change index when going through tabs
-        private void TabSelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            string tabHeader = "";
-            if (ComputerTabs.SelectedItem is TabItem selectedTab)
-            {
-                // Retrieve the header of the selected TabItem
-                tabHeader = selectedTab.Header?.ToString();
-            }
-
-            foreach (var client in currentClientList)
-            {
-                if(client.Item1 == tabHeader)
-                {
-                    clientIndex = client.Item3;
-                }
-            }
-        }
+        
 
         //search box
         private string search = "";
@@ -149,7 +132,24 @@ namespace RemoteSync
                 this.id = proccesId;
             }
         }
+        //change index when going through tabs
+        private void TabSelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            string tabHeader = "";
+            if (ComputerTabs.SelectedItem is TabItem selectedTab)
+            {
+                // Retrieve the header of the selected TabItem
+                tabHeader = selectedTab.Header?.ToString();
+            }
 
+            foreach (var client in currentClientList)
+            {
+                if (client.Item1 == tabHeader)
+                {
+                    clientIndex = client.Item3;
+                }
+            }
+        }
         //refresh and helpers
         public static async Task<Packet> SendRequest(Packet p, string IP)
         {
@@ -270,6 +270,7 @@ namespace RemoteSync
                 {
                     currentClientList.Add(tuple);
                     clientsNumber++;
+
                     //add here the new tab for the client
                     TabItem newTabItem = new TabItem
                     {

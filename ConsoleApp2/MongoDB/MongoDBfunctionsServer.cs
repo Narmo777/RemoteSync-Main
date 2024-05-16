@@ -15,13 +15,15 @@ namespace ConsoleApp2.MongoDB
     {
 
         private static MongoClient dbClient = new MongoClient("mongodb+srv://Nimrod:NimrodBenHamo85@cluster0.nvpsjki.mongodb.net/");
+        //private static MongoClient dbClient = new MongoClient("mongodb+srv://Narmod:NimrodBenHamo85@remotesync.wgwarwp.mongodb.net/?retryWrites=true&w=majority&appName=RemoteSync\r\n\r\n");
+
 
         private static int clientcount = 0;
         public static bool IsTechnicianExists(string username)
         {
             var db = dbClient.GetDatabase("LoginSystem");
             var collection = db.GetCollection<BsonDocument>("UserInfo");
-            var existingUser = collection.Find(new BsonDocument("username", username)).FirstOrDefault();
+            var existingUser = collection.Find( new BsonDocument("username", username)).FirstOrDefault();
             if (existingUser != null)
                 return true;
             else
