@@ -166,10 +166,64 @@ namespace RemoteSync
             }
         }
         public async Task<List<(int, string)>> GetProcesscesFromServer(string ip) => (await SendRequest(new Packet(RequestType.Get, ""), ip)).GetContentAsString().Split('#').Select(x => x.Split('|')).Select(x => (int.Parse(x[0]), x[1])).ToList();
-        private async Task RefreshScreenFromServer()
+        private async Task RefreshScreenFromServer(string username)
         {
+            var serverClientList = await MongoDBfunctions.GetAllClientsAsync(username);
+            bool exist = false;
 
-            foreach(var client in currentClientList)
+            if (clientsNumber == 0)
+            {
+                //client list is empty, add all of the client from mongo
+                foreach (var tuple in serverClientList)
+                {
+                    currentClientList.Add(tuple);
+                    clientsNumber++;
+
+                    //add here the new tab for the client
+                    TabItem newTabItem = new TabItem
+                    {
+                        Header = tuple.Item1.ToString()
+                    };
+                    ListBox listbox = new ListBox();
+                    listbox.Name = tuple.Item1.ToString() + "_listbox";
+                    listbox.Height = 600;
+
+                    newTabItem.Content = listbox;
+                    CmpTabs.Items.Add(newTabItem);
+
+                }
+            }
+            else
+            {
+                foreach (var tuple in serverClientList)
+                {
+                    foreach (var client in currentClientList)
+                    {
+                        if (client.Item2 == tuple.Item2)
+                        {
+                            exist = true;
+                            break;
+                        }
+                    }
+                    if (exist == false)
+                    {
+                        //the current client is not inside the tabs, so we will add it
+                        currentClientList.Add(tuple);
+                        clientsNumber++;
+                        //add here the new tab for the client
+                        TabItem newTabItem = new TabItem
+                        {
+                            Header = tuple.Item1,
+                            Name = tuple.Item2
+                        };
+                        CmpTabs.Items.Add(newTabItem);
+
+                    }
+                }
+            }
+
+
+            foreach (var client in currentClientList)
             {
                 var name = client.Item1;
                 var ip = client.Item2;
@@ -329,10 +383,10 @@ namespace RemoteSync
             ClientTimer.Interval = TimeSpan.FromMilliseconds(800);
 
             ClientTimer.Tick += async (sender, e) => await RefreshClientsAsync(technicianUsername);
-            timer.Tick += async (sender, e) => await RefreshScreenFromServer();
+            timer.Tick += async (sender, e) => await RefreshScreenFromServer(technicianUsername);
 
             // Start the timer
-            ClientTimer.Start();
+            //ClientTimer.Start();
             timer.Start();
         }
 
