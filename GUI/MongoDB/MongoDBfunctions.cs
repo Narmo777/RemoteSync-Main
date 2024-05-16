@@ -15,7 +15,6 @@ namespace GUI.MongoDB
         private static MongoClient dbClient = new MongoClient("mongodb+srv://Nimrod:NimrodBenHamo85@cluster0.nvpsjki.mongodb.net/");
         //private static MongoClient dbClient = new MongoClient("mongodb+srv://Narmod:NimrodBenHamo85@remotesync.wgwarwp.mongodb.net/?retryWrites=true&w=majority&appName=RemoteSync\r\n\r\n");
 
-
         //public static IMongoCollection<BsonDocument> GetUserInfoCollection()
         //{
         //    MongoClient dbClient = new MongoClient("mongodb+srv://Nimrod:NimrodBenHamo85@cluster0.nvpsjki.mongodb.net/");
