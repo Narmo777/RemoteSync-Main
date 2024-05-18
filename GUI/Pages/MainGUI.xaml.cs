@@ -68,7 +68,6 @@ namespace RemoteSync
         {
 
         }
-
         
 
         //search box
@@ -132,6 +131,7 @@ namespace RemoteSync
                 this.id = proccesId;
             }
         }
+        
         //change index when going through tabs
         private void TabSelectionChanged(object sender, SelectionChangedEventArgs e)
         {
@@ -149,7 +149,8 @@ namespace RemoteSync
                     clientIndex = client.Item3;
                 }
             }
-        }
+        }        
+        
         //refresh and helpers
         public static async Task<Packet> SendRequest(Packet p, string IP)
         {
@@ -171,74 +172,88 @@ namespace RemoteSync
             var serverClientList = await MongoDBfunctions.GetAllClientsAsync(username);
             bool exist = false;
 
-            if (clientsNumber == 0)
+            if (serverClientList != null)
             {
-                //client list is empty, add all of the client from mongo
-                foreach (var tuple in serverClientList)
+                if (clientsNumber == 0)
                 {
-                    currentClientList.Add(tuple);
-                    clientsNumber++;
-
-                    //add here the new tab for the client
-                    TabItem newTabItem = new TabItem
+                    //client list is empty, add all of the client from mongo
+                    foreach (var tuple in serverClientList)
                     {
-                        Header = tuple.Item1.ToString()
-                    };
-                    ListBox listbox = new ListBox();
-                    listbox.Name = tuple.Item1.ToString() + "_listbox";
-                    listbox.Height = 600;
-
-                    newTabItem.Content = listbox;
-                    CmpTabs.Items.Add(newTabItem);
-
-                }
-            }
-            else
-            {
-                foreach (var tuple in serverClientList)
-                {
-                    foreach (var client in currentClientList)
-                    {
-                        if (client.Item2 == tuple.Item2)
-                        {
-                            exist = true;
-                            break;
-                        }
-                    }
-                    if (exist == false)
-                    {
-                        //the current client is not inside the tabs, so we will add it
                         currentClientList.Add(tuple);
                         clientsNumber++;
+
                         //add here the new tab for the client
                         TabItem newTabItem = new TabItem
                         {
-                            Header = tuple.Item1,
-                            Name = tuple.Item2
+                            Header = tuple.Item1.ToString()
                         };
+                        ListBox listbox = new ListBox();
+                        listbox.Name = tuple.Item1.ToString() + "_listbox";
+                        listbox.Height = 600;
+
+                        newTabItem.Content = listbox;
+                        listbox.SelectionChanged += MainListBox_SelectionChanged; //enables the useage of the MainListBox_SelectionChanged function
+
                         CmpTabs.Items.Add(newTabItem);
 
                     }
                 }
+                else
+                {
+                    foreach (var tuple in serverClientList)
+                    {
+                        foreach (var client in currentClientList)
+                        {
+                            if (client.Item2 == tuple.Item2)
+                            {
+                                exist = true;
+                                break;
+                            }
+                        }
+                        if (exist == false)
+                        {
+                            //the current client is not inside the tabs, so we will add it
+                            currentClientList.Add(tuple);
+                            clientsNumber++;
+                            
+                            //add here the new tab for the client
+                            TabItem newTabItem = new TabItem
+                            {
+                                Header = tuple.Item1.ToString()
+                            };
+                            ListBox listbox = new ListBox();
+                            listbox.Name = tuple.Item1.ToString() + "_listbox";
+                            listbox.Height = 600;
+
+                            newTabItem.Content = listbox;
+                            listbox.SelectionChanged += MainListBox_SelectionChanged;
+
+                            CmpTabs.Items.Add(newTabItem);
+
+                        }
+                    }
+                }
             }
-
-
-            foreach (var client in currentClientList)
+            if (currentClientList != null)
             {
-                var name = client.Item1;
-                var ip = client.Item2;
-                var id = client.Item3;
+                foreach (var client in currentClientList)
+                {
+                    var name = client.Item1;
+                    var ip = client.Item2;
+                    var id = client.Item3;
 
-                try //try to update the process list for each client, if falied, client has disconnected
-                {
-                    var newProcesses = await GetProcesscesFromServer(ip);
-                    Dispatcher.Invoke(() => UpdateProcessList(newProcesses));
-                }
-                catch (Exception e)
-                {
-                    RemoveCurrentTab(name);
-                    await MongoDBfunctions.RemoveDisconnectedClientAsync(technicianUsername, ip);
-                }
+                    try //try to update the process list for each client, if falied, client has disconnected
+                    {
+                        var newProcesses = await GetProcesscesFromServer(ip);
+                        Dispatcher.Invoke(() => UpdateProcessList(newProcesses));
+                    }
+                    catch (Exception e)
+                    {
+                        RemoveCurrentTab(name);
+                        clientsNumber--;
+                        await MongoDBfunctions.RemoveDisconnectedClientAsync(technicianUsername, ip);
+                    }
+                } 
             }
 
             ////go to the next tab
@@ -372,17 +387,18 @@ namespace RemoteSync
 
         //setting timer for refresh
         private DispatcherTimer timer;
-        private DispatcherTimer ClientTimer;
+        //private DispatcherTimer ClientTimer;
         public void InitTimer()
         {
             // Initialize the timer
             timer = new DispatcherTimer();
             timer.Interval = TimeSpan.FromMilliseconds(1000); // Set the interval to 1000 milliseconds = 1 second
             
-            ClientTimer = new DispatcherTimer();
-            ClientTimer.Interval = TimeSpan.FromMilliseconds(800);
+            //ClientTimer = new DispatcherTimer();
+            //ClientTimer.Interval = TimeSpan.FromMilliseconds(800);
 
-            ClientTimer.Tick += async (sender, e) => await RefreshClientsAsync(technicianUsername);
+            //ClientTimer.Tick += async (sender, e) => await RefreshClientsAsync(technicianUsername);
+            
             timer.Tick += async (sender, e) => await RefreshScreenFromServer(technicianUsername);
 
             // Start the timer
