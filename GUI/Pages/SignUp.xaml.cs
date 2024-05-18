@@ -213,5 +213,11 @@ namespace RemoteSync
             // If all conditions pass, return true
             return true;
         }
+
+        private void BackArrow_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            LogIn logIn = new LogIn();
+            this.NavigationService.Navigate(logIn);
+        }
     }
 }

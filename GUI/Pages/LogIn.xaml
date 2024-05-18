@@ -5,10 +5,40 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:RemoteSync"
         mc:Ignorable="d"
-        Title="LogIn" Height="700" Width="1200">
+        d:DesignHeight="700" d:DesignWidth="1200"
+        Title="LogIn">
     <Page.Background>
         <ImageBrush ImageSource="/GUI;component/Images/login page.png" Stretch="Fill" />
     </Page.Background>
+    <Page.Resources>
+        <!-- Custom Button Style to remove blue glow on hover -->
+        <Style x:Key="NoGlowButtonStyle" TargetType="Button">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" 
+                                BorderBrush="{TemplateBinding BorderBrush}" 
+                                BorderThickness="{TemplateBinding BorderThickness}">
+                            <ContentPresenter HorizontalAlignment="Center" 
+                                              VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="BorderBrush" Value="Transparent"/>
+                                <Setter Property="FontWeight" Value="Bold"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="LightGray"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.5"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Page.Resources>
     <Grid>
         <Label Content="RemoteSync" HorizontalAlignment="Left" Margin="204,363,0,0" VerticalAlignment="Top" FontSize="22" FontWeight="Bold" FontStyle="Italic" Height="54" Width="151"/>
         <Image HorizontalAlignment="Left" Height="168" Margin="187,192,0,0" VerticalAlignment="Top" Width="172" Source="/GUI;component/Images/project-management.png"/>
@@ -19,8 +49,8 @@
         <Label Content="Password" HorizontalAlignment="Left" Height="36" Margin="560,331,0,0" VerticalAlignment="Top" Width="98" FontWeight="Bold" FontSize="17"/>
         <TextBox x:Name="Password" HorizontalAlignment="Left" Height="32" Margin="560,367,0,0" Text="Enter your Password" Opacity="0.5" TextWrapping="Wrap" VerticalAlignment="Top" Width="314" FontSize="17" TextChanged="PasswordBox_TextChanged" PreviewMouseDown="PasswordTextBox_MouseDown"/>
 
-        <Button x:Name="ForgotPassword" Content="forgot password?" HorizontalAlignment="Left" Margin="734,404,0,0" VerticalAlignment="Top" Width="140" FontSize="17" Background="{x:Null}" BorderBrush="{x:Null}" Click="ForgotPassword_Click"/>
-        <Button Content="Login" HorizontalAlignment="Left" Height="44" Margin="560,506,0,0" VerticalAlignment="Top" Width="424" BorderBrush="{x:Null}" FontSize="17" Click="LogIn_Click" Background="#FF1AEBB6"/>
-        <Button Content="Dosen't have an account? Sign Up" HorizontalAlignment="Left" Height="25" Margin="792,550,0,0" VerticalAlignment="Top" Width="192" Background="Transparent" BorderBrush="{x:Null}" Click="SignUp_Click"/>
+        <Button x:Name="ForgotPassword" Content="forgot password?" HorizontalAlignment="Left" Margin="734,404,0,0" VerticalAlignment="Top" Width="140" FontSize="17" Background="{x:Null}" BorderBrush="{x:Null}" Style="{StaticResource NoGlowButtonStyle}" Click="ForgotPassword_Click"/>
+        <Button Content="Login" HorizontalAlignment="Left" Height="44" Margin="560,506,0,0" VerticalAlignment="Top" Width="424" BorderBrush="{x:Null}" FontSize="17" Background="#FF1AEBB6" Click="LogIn_Click" />
+        <Button Content="Dosen't have an account? Sign Up" HorizontalAlignment="Left" Height="25" Margin="792,550,0,0" VerticalAlignment="Top" Width="192" Background="Transparent" BorderBrush="{x:Null}" Style="{StaticResource NoGlowButtonStyle}" Click="SignUp_Click"/>
     </Grid>
 </Page>

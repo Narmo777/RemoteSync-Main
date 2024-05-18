@@ -94,5 +94,6 @@ namespace RemoteSync
             SignUp signup = new SignUp();
             this.NavigationService.Navigate(signup);
         }
+
     }
 }

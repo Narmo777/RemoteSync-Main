@@ -116,6 +116,10 @@ namespace RemoteSync
             errorWindow.Show();
         }
 
-
+        private void BackArrow_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            LogIn logIn = new LogIn();
+            this.NavigationService.Navigate(logIn);
+        }
     }
 }

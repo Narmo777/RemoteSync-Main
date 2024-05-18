@@ -214,6 +214,7 @@
     <Analyzer Include="..\packages\AWSSDK.SecurityToken.3.7.100.14\analyzers\dotnet\cs\AWSSDK.SecurityToken.CodeAnalysis.dll" />
   </ItemGroup>
   <ItemGroup>
+    <Resource Include="Images\back arrow.png" />
     <Content Include="mongocrypt.dll" />
   </ItemGroup>
   <ItemGroup>
