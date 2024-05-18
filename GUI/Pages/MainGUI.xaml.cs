@@ -22,6 +22,7 @@ using System.Windows.Threading;
 using ConsoleApp2.MongoDB;
 using GUI.MongoDB;
 using System.Windows.Controls.Primitives;
+using System.Collections.ObjectModel;
 
 namespace RemoteSync
 {
@@ -124,11 +125,25 @@ namespace RemoteSync
             }
             else
             {
-                var selectedProcces = GetCurrentListBox().SelectedItem.ToString();
-                string[] procces = selectedProcces.Split(',', '(');
-                var proccesId = procces[1];
+                //var selectedProcces = GetCurrentListBox().SelectedItem.ToString();
+                //string[] procces = selectedProcces.Split(',', '(');
+                //var proccesId = procces[1];
 
-                this.id = proccesId;
+                //this.id = proccesId;
+
+
+                ListBox currentListBox = GetCurrentListBox();
+                if (currentListBox.SelectedItem != null)
+                {
+                    // Cast the selected item to ListItem
+                    var selectedProcess = currentListBox.SelectedItem as ListItem;
+
+                    if (selectedProcess != null)
+                    {
+                        // Access the Part2 property
+                        this.id = selectedProcess.ID.ToString();
+                    }
+                }
             }
         }
         
@@ -192,7 +207,8 @@ namespace RemoteSync
                         listbox.Height = 600;
 
                         newTabItem.Content = listbox;
-                        listbox.SelectionChanged += MainListBox_SelectionChanged; //enables the useage of the MainListBox_SelectionChanged function
+                        listbox.SelectionChanged += MainListBox_SelectionChanged; //enables the useage of the MainListBox_SelectionChanged function                        
+                        listbox.ItemTemplate = ListItemTemplate();
 
                         CmpTabs.Items.Add(newTabItem);
 
@@ -227,6 +243,7 @@ namespace RemoteSync
 
                             newTabItem.Content = listbox;
                             listbox.SelectionChanged += MainListBox_SelectionChanged;
+                            listbox.ItemTemplate= ListItemTemplate();
 
                             CmpTabs.Items.Add(newTabItem);
 
@@ -245,7 +262,7 @@ namespace RemoteSync
                     try //try to update the process list for each client, if falied, client has disconnected
                     {
                         var newProcesses = await GetProcesscesFromServer(ip);
-                        Dispatcher.Invoke(() => UpdateProcessList(newProcesses));
+                        Dispatcher.Invoke(() => UpdateProcessListNew2(newProcesses));
                     }
                     catch (Exception e)
                     {
@@ -290,9 +307,9 @@ namespace RemoteSync
         private void UpdateProcessList(List<(int, string)> newProcesses)
         {
             ListBox currentlistbox = GetCurrentListBox();
+
             foreach (var newItem in newProcesses)
             {
-                //change the Mainlistbox to the listbox of the client tab
                 if (!currentlistbox.Items.Cast<(int, string)>().Any(existingItem => existingItem.Item1 == newItem.Item1))
                 {
                     currentlistbox.Items.Add(newItem);
@@ -315,6 +332,111 @@ namespace RemoteSync
                     if (!existingItem.ToString().Contains(search))
                     {
                         currentlistbox.Items.Remove(existingItem);
+                    }
+                }
+            }
+        }
+
+        private ObservableCollection<ListItem> items = new ObservableCollection<ListItem>();
+        private void UpdateProcessListNew(List<(int, string)> newProcesses)
+        {
+            var ProcessesListItem = new List<ListItem>();
+            // Convert newProcesses to ListItem objects
+            foreach (var process in newProcesses)
+            {
+                ListItem current = new ListItem { Name = process.Item2, ID = process.Item1 };
+                ProcessesListItem.Add(current);
+            }
+            // insert to items
+            foreach (var listItem in ProcessesListItem)
+            {
+                if (!items.Any(item => item.ID == listItem.ID && item.Name == listItem.Name))
+                {
+                    items.Add(listItem);
+                }
+            }
+
+            ListBox currentListbox = GetCurrentListBox();
+            foreach(var item in items)
+            {
+                currentListbox.Items.Add(item);
+            }
+            // Remove duplicates
+            foreach (var existingListItem in currentListbox.Items.Cast < ListItem>())
+            {
+                (int, string) existingItem = (existingListItem.ID,  existingListItem.Name);
+                
+                if (!newProcesses.Contains(existingItem))
+                {
+                    currentListbox.Items.Remove(existingItem);
+                }
+                if (existingItem.ToString().Contains("GUI")) //remove my app from the listbox
+                {
+                    currentListbox.Items.Remove(existingItem);
+                }
+                if (search != "")
+                {
+                    if (!existingItem.ToString().Contains(search))
+                    {
+                        currentListbox.Items.Remove(existingItem);
+                    }
+                }
+            }
+        }
+        private void UpdateProcessListNew2(List<(int, string)> newProcesses)
+        {
+            var ProcessesListItem = new List<ListItem>();
+            // Convert newProcesses to ListItem objects
+            foreach (var process in newProcesses)
+            {
+                ListItem current = new ListItem { Name = process.Item2, ID = process.Item1 };
+                ProcessesListItem.Add(current);
+            }
+
+            ListBox currentListBox = GetCurrentListBox();
+
+            // Remove duplicates from the ListBox
+            foreach (var newItem in ProcessesListItem)
+            {
+                bool alreadyExists = false;
+                foreach (var listBoxItem in currentListBox.Items)
+                {
+                    var existingItem = listBoxItem as ListItem;
+                    if (existingItem != null && existingItem.ID == newItem.ID && existingItem.Name == newItem.Name)
+                    {
+                        alreadyExists = true;
+                        break;
+                    }
+                }
+                if (!alreadyExists)
+                {
+                    // Add new item to ListBox only if it contains the search term
+                    if (search == "" || newItem.Name.Contains(search))
+                    {
+                        items.Add(newItem);
+                        currentListBox.Items.Add(newItem);
+                    }
+                }
+            }
+
+            // Remove items that do not exist in newProcesses
+            for (int i = currentListBox.Items.Count - 1; i >= 0; i--)
+            {
+                var item = currentListBox.Items[i] as ListItem;
+                if (item != null && !ProcessesListItem.Any(p => p.ID == item.ID && p.Name == item.Name))
+                {
+                    currentListBox.Items.RemoveAt(i);
+                }
+            }
+            // Remove items that do not contain the search term
+            if (search != "")
+            {
+                for (int i = currentListBox.Items.Count - 1; i >= 0; i--)
+                {
+                    var item = currentListBox.Items[i] as ListItem;
+                    if (item != null && !item.Name.Contains(search))
+                    {
+                        currentListBox.Items.RemoveAt(i);
                     }
                 }
             }
@@ -456,5 +578,42 @@ namespace RemoteSync
                 ComputerTabs.Items.Remove(tabToRemove);
             }
         }
+
+        public DataTemplate ListItemTemplate()
+        {
+            DataTemplate dataTemplate = new DataTemplate(typeof(ListItem));
+
+            // Create a StackPanel as the root of the template
+            FrameworkElementFactory stackPanelFactory = new FrameworkElementFactory(typeof(StackPanel));
+            stackPanelFactory.SetValue(StackPanel.OrientationProperty, Orientation.Horizontal);
+
+            // Create the first TextBlock and bind it to Part1
+            FrameworkElementFactory textBlock1Factory = new FrameworkElementFactory(typeof(TextBlock));
+            textBlock1Factory.SetBinding(TextBlock.TextProperty, new Binding("Name"));
+            textBlock1Factory.SetValue(TextBlock.MarginProperty, new Thickness(5));
+            textBlock1Factory.SetValue(TextBlock.WidthProperty, 200.0);
+
+            // Create the second TextBlock and bind it to Part2
+            FrameworkElementFactory textBlock2Factory = new FrameworkElementFactory(typeof(TextBlock));
+            textBlock2Factory.SetBinding(TextBlock.TextProperty, new Binding("ID"));
+            textBlock2Factory.SetValue(TextBlock.MarginProperty, new Thickness(5));
+            textBlock2Factory.SetValue(TextBlock.WidthProperty, 200.0);
+
+            // Add the TextBlocks to the StackPanel
+            stackPanelFactory.AppendChild(textBlock1Factory);
+            stackPanelFactory.AppendChild(textBlock2Factory);
+
+            // Set the VisualTree of the DataTemplate
+            dataTemplate.VisualTree = stackPanelFactory;
+
+            // return DataTemplate
+            return dataTemplate;
+        }
     }
+    public class ListItem
+    {
+        public string Name { get; set; }
+        public int ID { get; set; }
+    }
+
 }
