@@ -532,7 +532,6 @@ namespace RemoteSync
             
             //ClientTimer = new DispatcherTimer();
             //ClientTimer.Interval = TimeSpan.FromMilliseconds(800);
-
             //ClientTimer.Tick += async (sender, e) => await RefreshClientsAsync(technicianUsername);
             
             timer.Tick += async (sender, e) => await RefreshScreenFromServer(technicianUsername);
