@@ -253,7 +253,7 @@ namespace RemoteSync
             }
             if (currentClientList != null)
             {
-                foreach (var client in currentClientList)
+                foreach (var client in currentClientList.ToList())
                 {
                     var name = client.Item1;
                     var ip = client.Item2;
@@ -263,7 +263,7 @@ namespace RemoteSync
 
                     try //try to update the process list for each client, if falied, client has disconnected
                     {
-                        foreach(var item in ComputerTabs.Items)
+                        foreach (var item in ComputerTabs.Items)
                         {
                             var tab = item as TabItem;
                             if (tab != null)
@@ -273,19 +273,20 @@ namespace RemoteSync
                                     clientListBox = tab.Content as ListBox;
                                 }
                             }
-                        }                        
+                        }
 
                         var newProcesses = await GetProcesscesFromServer(ip);
                         Dispatcher.Invoke(() => UpdateProcessList(newProcesses, clientListBox));
                     }
                     catch (Exception e)
                     {
+                        currentClientList.Remove(client);
                         RemoveCurrentTab(name);
                         clientsNumber--;
                         await MongoDBfunctions.RemoveDisconnectedClientAsync(technicianUsername, ip);
                     }
-                } 
-            }          
+                }
+            }
         }
 
         private ObservableCollection<ListItem> items = new ObservableCollection<ListItem>();
@@ -346,6 +347,7 @@ namespace RemoteSync
                     }
                 }
             }
+            
         }
 
         //refresh the clients
@@ -419,7 +421,7 @@ namespace RemoteSync
         {
             // Initialize the timer
             timer = new DispatcherTimer();
-            timer.Interval = TimeSpan.FromMilliseconds(1500); // Set the interval to 1000 milliseconds = 1 second           
+            timer.Interval = TimeSpan.FromMilliseconds(1000); // Set the interval to 1000 milliseconds = 1 second           
             
             timer.Tick += async (sender, e) => await RefreshScreenFromServer(technicianUsername);
 
