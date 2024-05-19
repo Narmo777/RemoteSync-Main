@@ -259,10 +259,24 @@ namespace RemoteSync
                     var ip = client.Item2;
                     var id = client.Item3;
 
+                    ListBox clientListBox = new ListBox();
+
                     try //try to update the process list for each client, if falied, client has disconnected
                     {
+                        foreach(var item in ComputerTabs.Items)
+                        {
+                            var tab = item as TabItem;
+                            if (tab != null)
+                            {
+                                if (tab.Header != null && tab.Header.ToString() == name)
+                                {
+                                    clientListBox = tab.Content as ListBox;
+                                }
+                            }
+                        }                        
+
                         var newProcesses = await GetProcesscesFromServer(ip);
-                        Dispatcher.Invoke(() => UpdateProcessListNew2(newProcesses));
+                        Dispatcher.Invoke(() => UpdateProcessListNew2(newProcesses, clientListBox));
                     }
                     catch (Exception e)
                     {
@@ -383,7 +397,7 @@ namespace RemoteSync
                 }
             }
         }
-        private void UpdateProcessListNew2(List<(int, string)> newProcesses)
+        private void UpdateProcessListNew2(List<(int, string)> newProcesses, ListBox clientListBox)
         {
             var ProcessesListItem = new List<ListItem>();
             // Convert newProcesses to ListItem objects
@@ -393,7 +407,7 @@ namespace RemoteSync
                 ProcessesListItem.Add(current);
             }
 
-            ListBox currentListBox = GetCurrentListBox();
+            ListBox currentListBox = clientListBox;
 
             // Remove duplicates from the ListBox
             foreach (var newItem in ProcessesListItem)
@@ -514,7 +528,7 @@ namespace RemoteSync
         {
             // Initialize the timer
             timer = new DispatcherTimer();
-            timer.Interval = TimeSpan.FromMilliseconds(1000); // Set the interval to 1000 milliseconds = 1 second
+            timer.Interval = TimeSpan.FromMilliseconds(1500); // Set the interval to 1000 milliseconds = 1 second
             
             //ClientTimer = new DispatcherTimer();
             //ClientTimer.Interval = TimeSpan.FromMilliseconds(800);
