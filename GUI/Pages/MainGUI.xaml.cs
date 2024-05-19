@@ -276,7 +276,7 @@ namespace RemoteSync
                         }                        
 
                         var newProcesses = await GetProcesscesFromServer(ip);
-                        Dispatcher.Invoke(() => UpdateProcessListNew2(newProcesses, clientListBox));
+                        Dispatcher.Invoke(() => UpdateProcessList(newProcesses, clientListBox));
                     }
                     catch (Exception e)
                     {
@@ -285,119 +285,11 @@ namespace RemoteSync
                         await MongoDBfunctions.RemoveDisconnectedClientAsync(technicianUsername, ip);
                     }
                 } 
-            }
-
-            ////go to the next tab
-            //int currentIndex = ComputerTabs.SelectedIndex;// Get the index of the currently selected tab                
-            //if(currentIndex == 0)
-            //{
-            //    ComputerTabs.Items.Clear();
-            //}
-            //else
-            //{
-            //    int newIndex = currentIndex--;// Calculate the index of the tab on the left
-
-            //    // Ensure the new index is within the valid range
-            //    if (newIndex >= 0)
-            //    {
-            //        ComputerTabs.SelectedIndex = newIndex;
-            //    }
-            //}
-
-            ////hide the tab that dosent work
-            //string tabHeader = "";
-            //if (ComputerTabs.SelectedItem is TabItem selectedTab)
-            //{
-            //    // Retrieve the header of the selected TabItem
-            //    tabHeader = selectedTab.Header?.ToString();
-            //    selectedTab.Visibility = Visibility.Collapsed;
-            //}
-
-            //ComputerTabs.SelectedItem = null;
-            ////remove the tab that dosent work from mongodb
-            //string clientIP = GetCurrentIP();
-            //await MongoDBfunctionsServer.RemoveDisconnectedClientAsync(technicianUsername, clientIP);
-        }
-        private void UpdateProcessList(List<(int, string)> newProcesses)
-        {
-            ListBox currentlistbox = GetCurrentListBox();
-
-            foreach (var newItem in newProcesses)
-            {
-                if (!currentlistbox.Items.Cast<(int, string)>().Any(existingItem => existingItem.Item1 == newItem.Item1))
-                {
-                    currentlistbox.Items.Add(newItem);
-                }
-            }
-
-            // Remove items that no longer exist
-            foreach (var existingItem in currentlistbox.Items.Cast<(int, string)>().ToList())
-            {
-                if (!newProcesses.Contains(existingItem))
-                {
-                    currentlistbox.Items.Remove(existingItem);
-                }
-                if (existingItem.ToString().Contains("GUI")) //remove my app from the listbox
-                {
-                    currentlistbox.Items.Remove(existingItem);
-                }
-                if (search != "")
-                {
-                    if (!existingItem.ToString().Contains(search))
-                    {
-                        currentlistbox.Items.Remove(existingItem);
-                    }
-                }
-            }
+            }          
         }
 
         private ObservableCollection<ListItem> items = new ObservableCollection<ListItem>();
-        private void UpdateProcessListNew(List<(int, string)> newProcesses)
-        {
-            var ProcessesListItem = new List<ListItem>();
-            // Convert newProcesses to ListItem objects
-            foreach (var process in newProcesses)
-            {
-                ListItem current = new ListItem { Name = process.Item2, ID = process.Item1 };
-                ProcessesListItem.Add(current);
-            }
-            // insert to items
-            foreach (var listItem in ProcessesListItem)
-            {
-                if (!items.Any(item => item.ID == listItem.ID && item.Name == listItem.Name))
-                {
-                    items.Add(listItem);
-                }
-            }
-
-            ListBox currentListbox = GetCurrentListBox();
-            foreach(var item in items)
-            {
-                currentListbox.Items.Add(item);
-            }
-            // Remove duplicates
-            foreach (var existingListItem in currentListbox.Items.Cast < ListItem>())
-            {
-                (int, string) existingItem = (existingListItem.ID,  existingListItem.Name);
-                
-                if (!newProcesses.Contains(existingItem))
-                {
-                    currentListbox.Items.Remove(existingItem);
-                }
-                if (existingItem.ToString().Contains("GUI")) //remove my app from the listbox
-                {
-                    currentListbox.Items.Remove(existingItem);
-                }
-                if (search != "")
-                {
-                    if (!existingItem.ToString().Contains(search))
-                    {
-                        currentListbox.Items.Remove(existingItem);
-                    }
-                }
-            }
-        }
-        private void UpdateProcessListNew2(List<(int, string)> newProcesses, ListBox clientListBox)
+        private void UpdateProcessList(List<(int, string)> newProcesses, ListBox clientListBox)
         {
             var ProcessesListItem = new List<ListItem>();
             // Convert newProcesses to ListItem objects
@@ -523,21 +415,15 @@ namespace RemoteSync
 
         //setting timer for refresh
         private DispatcherTimer timer;
-        //private DispatcherTimer ClientTimer;
         public void InitTimer()
         {
             // Initialize the timer
             timer = new DispatcherTimer();
-            timer.Interval = TimeSpan.FromMilliseconds(1500); // Set the interval to 1000 milliseconds = 1 second
-            
-            //ClientTimer = new DispatcherTimer();
-            //ClientTimer.Interval = TimeSpan.FromMilliseconds(800);
-            //ClientTimer.Tick += async (sender, e) => await RefreshClientsAsync(technicianUsername);
+            timer.Interval = TimeSpan.FromMilliseconds(1500); // Set the interval to 1000 milliseconds = 1 second           
             
             timer.Tick += async (sender, e) => await RefreshScreenFromServer(technicianUsername);
 
             // Start the timer
-            //ClientTimer.Start();
             timer.Start();
         }
 
