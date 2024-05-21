@@ -26,7 +26,7 @@ namespace RemoteSync
     public partial class LogIn : Page
     {
         private string username = null;
-        private string password = null;
+        private string password = "";
 
         public LogIn()
         {
@@ -34,7 +34,7 @@ namespace RemoteSync
         }
 
         private void UsernameBox_TextChanged(object sender, TextChangedEventArgs e)
-        {
+        {            
             this.username = Username.Text;
         }
         private void UsernameTextBox_MouseDown(object sender, MouseButtonEventArgs e)
@@ -43,9 +43,19 @@ namespace RemoteSync
                 Username.Text = string.Empty;
         }
 
-        private void PasswordBox_TextChanged(object sender, TextChangedEventArgs e)
+        private void PasswordTextBox_TextChanged(object sender, TextChangedEventArgs e)
         {
-            this.password = Password.Text;
+            //this.password = Password.Text;
+
+
+            // Store the current caret position
+            int caretPosition = Password.CaretIndex;
+
+            // Display asterisks instead of the actual text
+            Password.Text = new string('*', this.password.Length);
+
+            // Restore the caret position
+            Password.CaretIndex = caretPosition;
         }
         private void PasswordTextBox_MouseDown(object sender, MouseButtonEventArgs e)
         {
@@ -94,6 +104,5 @@ namespace RemoteSync
             SignUp signup = new SignUp();
             this.NavigationService.Navigate(signup);
         }
-
     }
 }

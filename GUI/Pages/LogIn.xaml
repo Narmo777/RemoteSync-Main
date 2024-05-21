@@ -47,7 +47,8 @@
         <Label Content="Username" HorizontalAlignment="Left" Height="35" Margin="560,257,0,0" VerticalAlignment="Top" Width="98" FontWeight="Bold" FontSize="17"/>
         <TextBox x:Name="Username" HorizontalAlignment="Left" Height="34" Margin="560,292,0,0" Text="Enter your Username" Opacity="0.5" TextWrapping="Wrap" VerticalAlignment="Top" Width="314" SelectionOpacity="1" FontSize="17" TextChanged="UsernameBox_TextChanged" PreviewMouseDown="UsernameTextBox_MouseDown"/>
         <Label Content="Password" HorizontalAlignment="Left" Height="36" Margin="560,331,0,0" VerticalAlignment="Top" Width="98" FontWeight="Bold" FontSize="17"/>
-        <TextBox x:Name="Password" HorizontalAlignment="Left" Height="32" Margin="560,367,0,0" Text="Enter your Password" Opacity="0.5" TextWrapping="Wrap" VerticalAlignment="Top" Width="314" FontSize="17" TextChanged="PasswordBox_TextChanged" PreviewMouseDown="PasswordTextBox_MouseDown"/>
+        <TextBox x:Name="Password" HorizontalAlignment="Left" Height="32" Margin="560,367,0,0" Text="Enter your Password" Opacity="0.5" TextWrapping="Wrap" VerticalAlignment="Top" Width="314" FontSize="17" TextChanged="PasswordTextBox_TextChanged" PreviewMouseDown="PasswordTextBox_MouseDown"/>
+
 
         <Button x:Name="ForgotPassword" Content="forgot password?" HorizontalAlignment="Left" Margin="734,404,0,0" VerticalAlignment="Top" Width="140" FontSize="17" Background="{x:Null}" BorderBrush="{x:Null}" Style="{StaticResource NoGlowButtonStyle}" Click="ForgotPassword_Click"/>
         <Button Content="Login" HorizontalAlignment="Left" Height="44" Margin="560,506,0,0" VerticalAlignment="Top" Width="424" BorderBrush="{x:Null}" FontSize="17" Background="#FF1AEBB6" Click="LogIn_Click" />
