@@ -45,17 +45,7 @@ namespace RemoteSync
 
         private void PasswordTextBox_TextChanged(object sender, TextChangedEventArgs e)
         {
-            //this.password = Password.Text;
-
-
-            // Store the current caret position
-            int caretPosition = Password.CaretIndex;
-
-            // Display asterisks instead of the actual text
-            Password.Text = new string('*', this.password.Length);
-
-            // Restore the caret position
-            Password.CaretIndex = caretPosition;
+            this.password = Password.Text;
         }
         private void PasswordTextBox_MouseDown(object sender, MouseButtonEventArgs e)
         {

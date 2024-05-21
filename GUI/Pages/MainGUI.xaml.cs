@@ -182,6 +182,7 @@ namespace RemoteSync
             }
         }
         public async Task<List<(int, string)>> GetProcesscesFromServer(string ip) => (await SendRequest(new Packet(RequestType.Get, ""), ip)).GetContentAsString().Split('#').Select(x => x.Split('|')).Select(x => (int.Parse(x[0]), x[1])).ToList();
+        public async Task<List<(int, string, double)>> GetProcesscesFromServerNew(string ip) => (await SendRequest(new Packet(RequestType.Get, ""), ip)).GetContentAsString().Split('|').Select(x => x.Split('#')).Select(x => (int.Parse(x[0]), x[1], double.Parse(x[2]))).ToList();
         private async Task RefreshScreenFromServer(string username)
         {
             var serverClientList = await MongoDBfunctions.GetAllClientsAsync(username);
@@ -275,8 +276,8 @@ namespace RemoteSync
                             }
                         }
 
-                        var newProcesses = await GetProcesscesFromServer(ip);
-                        Dispatcher.Invoke(() => UpdateProcessList(newProcesses, clientListBox));
+                        var newProcesses = await GetProcesscesFromServerNew(ip);
+                        Dispatcher.Invoke(() => UpdateProcessListNew(newProcesses, clientListBox));
                     }
                     catch (Exception e)
                     {
@@ -349,7 +350,65 @@ namespace RemoteSync
             }
             
         }
+        private void UpdateProcessListNew(List<(int, string, double)> newProcesses, ListBox clientListBox)
+        {
+            var ProcessesListItem = new List<ListItem>();
+            // Convert newProcesses to ListItem objects
+            foreach (var process in newProcesses)
+            {
+                ListItem current = new ListItem { Name = process.Item2, ID = process.Item1, CPU = process.Item3 };
+                ProcessesListItem.Add(current);
+            }
 
+            ListBox currentListBox = clientListBox;
+
+            // Remove duplicates from the ListBox
+            foreach (var newItem in ProcessesListItem)
+            {
+                bool alreadyExists = false;
+                foreach (var listBoxItem in currentListBox.Items)
+                {
+                    var existingItem = listBoxItem as ListItem;
+                    if (existingItem != null && existingItem.ID == newItem.ID && existingItem.Name == newItem.Name)
+                    {
+                        alreadyExists = true;
+                        break;
+                    }
+                }
+                if (!alreadyExists)
+                {
+                    // Add new item to ListBox only if it contains the search term
+                    if (search == "" || newItem.Name.Contains(search))
+                    {
+                        items.Add(newItem);
+                        currentListBox.Items.Add(newItem);
+                    }
+                }
+            }
+
+            // Remove items that do not exist in newProcesses
+            for (int i = currentListBox.Items.Count - 1; i >= 0; i--)
+            {
+                var item = currentListBox.Items[i] as ListItem;
+                if (item != null && !ProcessesListItem.Any(p => p.ID == item.ID && p.Name == item.Name))
+                {
+                    currentListBox.Items.RemoveAt(i);
+                }
+            }
+            // Remove items that do not contain the search term
+            if (search != "")
+            {
+                for (int i = currentListBox.Items.Count - 1; i >= 0; i--)
+                {
+                    var item = currentListBox.Items[i] as ListItem;
+                    if (item != null && !item.Name.Contains(search))
+                    {
+                        currentListBox.Items.RemoveAt(i);
+                    }
+                }
+            }
+
+        }
         //refresh the clients
         public static TabControl CmpTabs;
         private void ComputerTabs_Loaded(object sender, RoutedEventArgs e)
@@ -500,9 +559,16 @@ namespace RemoteSync
             textBlock2Factory.SetValue(TextBlock.MarginProperty, new Thickness(5));
             textBlock2Factory.SetValue(TextBlock.WidthProperty, 200.0);
 
+            // Create the thrid TextBlock and bind it to Part3
+            FrameworkElementFactory textBlock3Factory = new FrameworkElementFactory(typeof(TextBlock));
+            textBlock3Factory.SetBinding(TextBlock.TextProperty, new Binding("CPU"));
+            textBlock3Factory.SetValue(TextBlock.MarginProperty, new Thickness(5));
+            textBlock3Factory.SetValue(TextBlock.WidthProperty, 200.0);
+
             // Add the TextBlocks to the StackPanel
             stackPanelFactory.AppendChild(textBlock1Factory);
             stackPanelFactory.AppendChild(textBlock2Factory);
+            stackPanelFactory.AppendChild(textBlock3Factory);
 
             // Set the VisualTree of the DataTemplate
             dataTemplate.VisualTree = stackPanelFactory;
@@ -515,6 +581,7 @@ namespace RemoteSync
     {
         public string Name { get; set; }
         public int ID { get; set; }
+        public double CPU { get; set; }
     }
 
 }

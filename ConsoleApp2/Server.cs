@@ -10,6 +10,7 @@ using Protocol;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using ConsoleApp2.MongoDB;
+using System.Threading;
 
 namespace Server
 {
@@ -153,13 +154,59 @@ namespace Server
 
             return new Packet(RequestType.Ok,data);
         }
+        private Packet HandleGetRequestNew()
+        {
+            var processes = Process.GetProcesses();
+            StringBuilder totalDataBuilder = new StringBuilder();
+
+            foreach (Process process in processes)
+            {
+                string data = "";
+                if(totalDataBuilder.Length > 0)
+                {
+                    totalDataBuilder.Append("|");
+                }
+
+                try
+                {
+                    // Capture the initial CPU usage time
+                    TimeSpan startCpuUsage = process.TotalProcessorTime;
+                    DateTime startTime = DateTime.Now;
+
+                    // Wait for a short period to capture CPU usage over time
+                    Thread.Sleep(100);
+
+                    // Capture the end CPU usage time
+                    TimeSpan endCpuUsage = process.TotalProcessorTime;
+                    DateTime endTime = DateTime.Now;
+
+                    // Calculate the CPU usage over the interval
+                    double cpuUsedMs = (endCpuUsage - startCpuUsage).TotalMilliseconds;
+                    double intervalMs = (endTime - startTime).TotalMilliseconds;
+                    double cpuUsagePercentage = (cpuUsedMs / (Environment.ProcessorCount * intervalMs)) * 100;
+
+                    data = $"{process.Id}#{process.ProcessName}#{cpuUsagePercentage}";
+                }
+                catch (Exception ex)
+                {
+                    data = $"{process.Id}#{process.ProcessName}#{000}";
+                }
+                finally
+                {
+                    totalDataBuilder.Append(data);
+                }
+            }
+
+            string TotalData = totalDataBuilder.ToString();
+            return new Packet(RequestType.Ok, TotalData);
+        }
         
         public Packet HandleRequest(ref Packet p)
         {
             switch (p.RequestType)
             {
                 case RequestType.Get:
-                    return HandleGetRequest();
+                    return HandleGetRequestNew();
                 case RequestType.Kill:
                     return HandleKillRequest(ref p);
                 case RequestType.Rsc:
