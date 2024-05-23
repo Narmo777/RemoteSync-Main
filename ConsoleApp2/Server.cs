@@ -157,14 +157,16 @@ namespace Server
         private Packet HandleGetRequestNew()
         {
             var processes = Process.GetProcesses();
-            StringBuilder totalDataBuilder = new StringBuilder();
+            //StringBuilder totalDataBuilder = new StringBuilder();
+            string totalDataBuilder = "";
+
 
             foreach (Process process in processes)
             {
                 string data = "";
                 if(totalDataBuilder.Length > 0)
                 {
-                    totalDataBuilder.Append("|");
+                    totalDataBuilder += '|';
                 }
 
                 try
@@ -174,7 +176,7 @@ namespace Server
                     DateTime startTime = DateTime.Now;
 
                     // Wait for a short period to capture CPU usage over time
-                    Thread.Sleep(100);
+                    Thread.Sleep(20);
 
                     // Capture the end CPU usage time
                     TimeSpan endCpuUsage = process.TotalProcessorTime;
@@ -185,15 +187,15 @@ namespace Server
                     double intervalMs = (endTime - startTime).TotalMilliseconds;
                     double cpuUsagePercentage = (cpuUsedMs / (Environment.ProcessorCount * intervalMs)) * 100;
 
-                    data = $"{process.Id}#{process.ProcessName}#{cpuUsagePercentage}";
+                    data = $"{process.Id}#{process.ProcessName}#{cpuUsagePercentage.ToString()}%";
                 }
                 catch (Exception ex)
                 {
-                    data = $"{process.Id}#{process.ProcessName}#{000}";
+                    data = $"{process.Id}#{process.ProcessName}#{000}%";
                 }
                 finally
                 {
-                    totalDataBuilder.Append(data);
+                    totalDataBuilder += data;
                 }
             }
 

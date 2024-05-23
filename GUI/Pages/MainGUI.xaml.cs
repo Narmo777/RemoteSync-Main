@@ -182,7 +182,7 @@ namespace RemoteSync
             }
         }
         public async Task<List<(int, string)>> GetProcesscesFromServer(string ip) => (await SendRequest(new Packet(RequestType.Get, ""), ip)).GetContentAsString().Split('#').Select(x => x.Split('|')).Select(x => (int.Parse(x[0]), x[1])).ToList();
-        public async Task<List<(int, string, double)>> GetProcesscesFromServerNew(string ip) => (await SendRequest(new Packet(RequestType.Get, ""), ip)).GetContentAsString().Split('|').Select(x => x.Split('#')).Select(x => (int.Parse(x[0]), x[1], double.Parse(x[2]))).ToList();
+        public async Task<List<(int, string, string)>> GetProcesscesFromServerNew(string ip) => (await SendRequest(new Packet(RequestType.Get, ""), ip)).GetContentAsString().Split('|').Select(x => x.Split('#')).Select(x => (int.Parse(x[0]), x[1], x[2])).ToList();
         private async Task RefreshScreenFromServer(string username)
         {
             var serverClientList = await MongoDBfunctions.GetAllClientsAsync(username);
@@ -350,7 +350,7 @@ namespace RemoteSync
             }
             
         }
-        private void UpdateProcessListNew(List<(int, string, double)> newProcesses, ListBox clientListBox)
+        private void UpdateProcessListNew(List<(int, string, string)> newProcesses, ListBox clientListBox)
         {
             var ProcessesListItem = new List<ListItem>();
             // Convert newProcesses to ListItem objects
@@ -480,7 +480,7 @@ namespace RemoteSync
         {
             // Initialize the timer
             timer = new DispatcherTimer();
-            timer.Interval = TimeSpan.FromMilliseconds(1000); // Set the interval to 1000 milliseconds = 1 second           
+            timer.Interval = TimeSpan.FromMilliseconds(2000); // Set the interval to 1000 milliseconds = 1 second           
             
             timer.Tick += async (sender, e) => await RefreshScreenFromServer(technicianUsername);
 
@@ -581,7 +581,7 @@ namespace RemoteSync
     {
         public string Name { get; set; }
         public int ID { get; set; }
-        public double CPU { get; set; }
+        public string CPU { get; set; }
     }
 
 }
