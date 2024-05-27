@@ -182,7 +182,28 @@ namespace RemoteSync
             }
         }
         public async Task<List<(int, string)>> GetProcesscesFromServer(string ip) => (await SendRequest(new Packet(RequestType.Get, ""), ip)).GetContentAsString().Split('#').Select(x => x.Split('|')).Select(x => (int.Parse(x[0]), x[1])).ToList();
-        public async Task<List<(int, string, string)>> GetProcesscesFromServerNew(string ip) => (await SendRequest(new Packet(RequestType.Get, ""), ip)).GetContentAsString().Split('|').Select(x => x.Split('#')).Select(x => (int.Parse(x[0]), x[1], x[2])).ToList();
+        public async Task<List<(int, string, string)>> GetProcesscesFromServerNew(string ip) 
+        {
+            var requset = await SendRequest(new Packet(RequestType.Get, ""), ip);
+            var content = requset.GetContentAsString();
+
+            var result = new List<(int, string, string)>();
+
+            var parts = content.Split('|');
+            foreach (var part in parts)
+            {
+                var components = part.Split('#');
+                if (components.Length == 3)
+                {
+                    if (int.TryParse(components[0], out int number))
+                    {
+                        result.Add((number, components[1], components[2]));
+                    }
+                }
+            }
+
+            return result;
+        } 
         private async Task RefreshScreenFromServer(string username)
         {
             var serverClientList = await MongoDBfunctions.GetAllClientsAsync(username);
@@ -480,7 +501,7 @@ namespace RemoteSync
         {
             // Initialize the timer
             timer = new DispatcherTimer();
-            timer.Interval = TimeSpan.FromMilliseconds(2000); // Set the interval to 1000 milliseconds = 1 second           
+            timer.Interval = TimeSpan.FromMilliseconds(1500); // Set the interval to 1000 milliseconds = 1 second           
             
             timer.Tick += async (sender, e) => await RefreshScreenFromServer(technicianUsername);
 
