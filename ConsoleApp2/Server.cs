@@ -176,7 +176,7 @@ namespace Server
                     DateTime startTime = DateTime.Now;
 
                     // Wait for a short period to capture CPU usage over time
-                    Thread.Sleep(20);
+                    Thread.Sleep(10);
 
                     // Capture the end CPU usage time
                     TimeSpan endCpuUsage = process.TotalProcessorTime;
