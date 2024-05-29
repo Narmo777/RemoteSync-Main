@@ -371,6 +371,18 @@ namespace RemoteSync
         }
 
 
+        private void TreeView_SelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
+        {
+            // Get the TreeView
+            TreeView treeView = sender as TreeView;
+
+            if (treeView != null)
+            {
+                // Get the selected item
+                var selectedItem = treeView.SelectedItem as ProcessItem;
+                this.id = selectedItem.ID.ToString();
+            }
+        }
         private async Task RefreshScreenFromServerNew(string username)
         {
             var serverClientList = await MongoDBfunctions.GetAllClientsAsync(username);
@@ -392,19 +404,17 @@ namespace RemoteSync
                             Header = tuple.Item1.ToString()
                         };
 
-                        // Replace ListBox with ListView
-                        ListView listView = new ListView
+                        // Create a new TreeView
+                        TreeView treeView = new TreeView
                         {
-                            Name = tuple.Item1.ToString() + "_listview",
+                            Name = tuple.Item1.ToString() + "_treeview",
                             Height = 600
                         };
 
-                        // Set the GridView as the View for the ListView
-                        listView.View = ListViewGrid();
-
-                        newTabItem.Content = listView;
-                        listView.SelectionChanged += MainListBox_SelectionChanged; // Enables the usage of the MainListBox_SelectionChanged function                        
-                        listView.ItemTemplate = ListViewDataTemplate();
+                        treeView.ItemTemplate = CreateTreeView();
+                        treeView.SelectedItemChanged += TreeView_SelectedItemChanged;
+                        // Set the TreeView as the content of the TabItem
+                        newTabItem.Content = treeView;
 
                         CmpTabs.Items.Add(newTabItem);
                     }
@@ -433,19 +443,25 @@ namespace RemoteSync
                                 Header = tuple.Item1.ToString()
                             };
 
-                            // Replace ListBox with ListView
-                            ListView listView = new ListView
+                            // Create a new TreeView
+                            TreeView treeView = new TreeView
                             {
-                                Name = tuple.Item1.ToString() + "_listview",
+                                Name = tuple.Item1.ToString() + "_treeview",
                                 Height = 600
                             };
 
-                            // Set the GridView as the View for the ListView
-                            listView.View = ListViewGrid();
-
-                            newTabItem.Content = listView;
-                            listView.SelectionChanged += MainListBox_SelectionChanged; // Enables the usage of the MainListBox_SelectionChanged function                        
-                            listView.ItemTemplate = ListViewDataTemplate();
+                            // Define the HierarchicalDataTemplate
+                            HierarchicalDataTemplate hdt = new HierarchicalDataTemplate
+                            {
+                                ItemsSource = new Binding("Children")
+                            };
+                            //FrameworkElementFactory textBlockFactory = new FrameworkElementFactory(typeof(TextBlock));
+                            //textBlockFactory.SetBinding(TextBlock.TextProperty, new Binding("Name"));
+                            //hdt.VisualTree = textBlockFactory;
+                            //treeView.ItemTemplate = hdt;
+                            treeView.ItemTemplate = CreateTreeView();
+                            // Set the TreeView as the content of the TabItem
+                            newTabItem.Content = treeView;
 
                             CmpTabs.Items.Add(newTabItem);
                         }
@@ -460,7 +476,7 @@ namespace RemoteSync
                     var ip = client.Item2;
                     var id = client.Item3;
 
-                    ListView clientListView = new ListView();
+                    TreeView clientTreeView = new TreeView();
 
                     try //try to update the process list for each client, if falied, client has disconnected
                     {
@@ -471,13 +487,13 @@ namespace RemoteSync
                             {
                                 if (tab.Header != null && tab.Header.ToString() == name)
                                 {
-                                    clientListView = tab.Content as ListView;
+                                    clientTreeView = tab.Content as TreeView;
                                 }
                             }
                         }
 
                         var newProcesses = await GetProcesscesFromServer(ip);
-                        Dispatcher.Invoke(() => UpdateProcessListNew(newProcesses, clientListView));
+                        Dispatcher.Invoke(() => UpdateProcessListNew(newProcesses, clientTreeView));
                     }
                     catch (Exception e)
                     {
@@ -489,47 +505,66 @@ namespace RemoteSync
                 }
             }
         }
-        private void UpdateProcessListNew(List<(int, string, string)> newProcesses, ListView clientListView)
+        private void UpdateProcessListNew(List<(int, string, string)> newProcesses, TreeView processTreeView)
         {
-            var ProcessesListItem = new List<ProcessItem>();
+            // Dictionary to store parent process items by name
+            var parentDictionary = new Dictionary<string, ProcessItem>();
 
-            // Convert newProcesses to ProcessItem objects
             foreach (var process in newProcesses)
             {
-                ProcessItem current = new ProcessItem { ID = process.Item1, Name = process.Item2, CPU = process.Item3 };
-                ProcessesListItem.Add(current);
+                var newItem = new ProcessItem { ID = process.Item1, Name = process.Item2, CPU = process.Item3 };
+
+                if (parentDictionary.ContainsKey(newItem.Name))
+                {
+                    // Add as a child to the existing parent with the same name
+                    parentDictionary[newItem.Name].Children.Add(newItem);
+                }
+                else
+                {
+                    // Create a new parent item
+                    parentDictionary[newItem.Name] = newItem;
+                }
             }
 
-            // Dictionary to store unique process items by ID
-            var processDictionary = new Dictionary<int, ProcessItem>();
-
-            // Convert newProcesses to ProcessItem objects and keep only the last occurrence for each ID
-            foreach (var process in newProcesses)
-            {
-                var current = new ProcessItem { ID = process.Item1, Name = process.Item2, CPU = process.Item3 };
-
-                // Replace existing item if there is a duplicate ID
-                processDictionary[current.ID] = current;
-            }
-
-            ListView currentListView = clientListView;
-
-            // Clear the ListView before updating with unique process items
-            currentListView.Items.Clear();
-
-            // Update ListView with unique process items
-            foreach (var processItem in processDictionary.Values)
-            {
-                currentListView.Items.Add(processItem);
-            }
+            // Get the current items in the TreeView
+            var currentItems = processTreeView.Items.Cast<ProcessItem>().ToList();
 
             // Remove items that do not exist in newProcesses
-            for (int i = currentListView.Items.Count - 1; i >= 0; i--)
+            foreach (var item in currentItems)
             {
-                var item = currentListView.Items[i] as ProcessItem;
-                if (item != null && !processDictionary.Any(p => p.Value.ID == item.ID))
+                if (!parentDictionary.ContainsKey(item.Name))
                 {
-                    currentListView.Items.RemoveAt(i);
+                    processTreeView.Items.Remove(item);
+                }
+                if (!item.Name.Contains(search))
+                {
+                    processTreeView.Items.Remove(item);
+                }
+            }
+
+            // Update or add new items
+            foreach (var newItem in parentDictionary.Values)
+            {
+                var existingItem = processTreeView.Items.Cast<ProcessItem>().FirstOrDefault(i => i.Name == newItem.Name);
+                if (existingItem != null)
+                {
+                    // Update existing item
+                    existingItem.ID = newItem.ID;
+                    existingItem.CPU = newItem.CPU;
+
+                    // Update children
+                    foreach (var child in newItem.Children)
+                    {
+                        if (!existingItem.Children.Any(c => c.ID == child.ID))
+                        {
+                            existingItem.Children.Add(child);
+                        }
+                    }
+                }                
+                else
+                {
+                    // Add new item
+                    processTreeView.Items.Add(newItem);
                 }
             }
         }
@@ -692,6 +727,74 @@ namespace RemoteSync
             }); //CPU
 
             return gridView;
+        }
+        private HierarchicalDataTemplate CreateTreeView()
+        {
+            // Create the TreeView
+            TreeView processTreeView = new TreeView();
+
+            // Define the HierarchicalDataTemplate for the TreeView items
+            HierarchicalDataTemplate hierarchicalDataTemplate = new HierarchicalDataTemplate();
+            hierarchicalDataTemplate.ItemsSource = new Binding("Children");
+
+            // Create the StackPanel for the template
+            FrameworkElementFactory stackPanelFactory = new FrameworkElementFactory(typeof(StackPanel));
+            stackPanelFactory.SetValue(StackPanel.OrientationProperty, Orientation.Horizontal);
+
+            // Create and bind TextBlocks for Name, ID, and CPU
+            FrameworkElementFactory nameTextBlock = new FrameworkElementFactory(typeof(TextBlock));
+            nameTextBlock.SetBinding(TextBlock.TextProperty, new Binding("Name"));
+            nameTextBlock.SetValue(TextBlock.MarginProperty, new Thickness(5));
+            nameTextBlock.SetValue(TextBlock.WidthProperty, 200.0);
+
+            FrameworkElementFactory idTextBlock = new FrameworkElementFactory(typeof(TextBlock));
+            idTextBlock.SetBinding(TextBlock.TextProperty, new Binding("ID"));
+            idTextBlock.SetValue(TextBlock.MarginProperty, new Thickness(5));
+            idTextBlock.SetValue(TextBlock.WidthProperty, 100.0);
+
+            FrameworkElementFactory cpuTextBlock = new FrameworkElementFactory(typeof(TextBlock));
+            cpuTextBlock.SetBinding(TextBlock.TextProperty, new Binding("CPU"));
+            cpuTextBlock.SetValue(TextBlock.MarginProperty, new Thickness(5));
+            cpuTextBlock.SetValue(TextBlock.WidthProperty, 100.0);
+
+            // Add TextBlocks to StackPanel
+            stackPanelFactory.AppendChild(nameTextBlock);
+            stackPanelFactory.AppendChild(idTextBlock);
+            stackPanelFactory.AppendChild(cpuTextBlock);
+
+            // Set the VisualTree of the HierarchicalDataTemplate
+            hierarchicalDataTemplate.VisualTree = stackPanelFactory;
+
+            // Define the inner DataTemplate for child items
+            DataTemplate innerDataTemplate = new DataTemplate();
+            FrameworkElementFactory innerStackPanelFactory = new FrameworkElementFactory(typeof(StackPanel));
+            innerStackPanelFactory.SetValue(StackPanel.OrientationProperty, Orientation.Horizontal);
+
+            FrameworkElementFactory innerNameTextBlock = new FrameworkElementFactory(typeof(TextBlock));
+            innerNameTextBlock.SetBinding(TextBlock.TextProperty, new Binding("Name"));
+            innerNameTextBlock.SetValue(TextBlock.MarginProperty, new Thickness(5));
+            innerNameTextBlock.SetValue(TextBlock.WidthProperty, 200.0);
+
+            FrameworkElementFactory innerIdTextBlock = new FrameworkElementFactory(typeof(TextBlock));
+            innerIdTextBlock.SetBinding(TextBlock.TextProperty, new Binding("ID"));
+            innerIdTextBlock.SetValue(TextBlock.MarginProperty, new Thickness(5));
+            innerIdTextBlock.SetValue(TextBlock.WidthProperty, 100.0);
+
+            FrameworkElementFactory innerCpuTextBlock = new FrameworkElementFactory(typeof(TextBlock));
+            innerCpuTextBlock.SetBinding(TextBlock.TextProperty, new Binding("CPU"));
+            innerCpuTextBlock.SetValue(TextBlock.MarginProperty, new Thickness(5));
+            innerCpuTextBlock.SetValue(TextBlock.WidthProperty, 100.0);
+
+            innerStackPanelFactory.AppendChild(innerNameTextBlock);
+            innerStackPanelFactory.AppendChild(innerIdTextBlock);
+            innerStackPanelFactory.AppendChild(innerCpuTextBlock);
+
+            innerDataTemplate.VisualTree = innerStackPanelFactory;
+
+            // Set the ItemTemplate of the inner HierarchicalDataTemplate
+            hierarchicalDataTemplate.ItemTemplate = innerDataTemplate;
+            
+            return hierarchicalDataTemplate;
         }
     }
     public class ListItem
