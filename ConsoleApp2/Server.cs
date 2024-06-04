@@ -187,7 +187,7 @@ namespace Server
                     double intervalMs = (endTime - startTime).TotalMilliseconds;
                     double cpuUsagePercentage = (cpuUsedMs / (Environment.ProcessorCount * intervalMs)) * 100;
 
-                    data = $"{process.Id}#{process.ProcessName}#{cpuUsagePercentage.ToString()}%";
+                    data = $"{process.Id}#{process.ProcessName}#{cpuUsagePercentage.ToString().Substring(0, 5)}%";
                 }
                 catch (Exception ex)
                 {

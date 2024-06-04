@@ -23,6 +23,7 @@ using ConsoleApp2.MongoDB;
 using GUI.MongoDB;
 using System.Windows.Controls.Primitives;
 using System.Collections.ObjectModel;
+using System.IO;
 
 namespace RemoteSync
 {
@@ -43,33 +44,59 @@ namespace RemoteSync
             InitTimer();
         }
         
-        public void Comp_Click(object sender, RoutedEventArgs e)
+        public async void Refresh_Click(object sender, RoutedEventArgs e)
         {
-            TabItem newComputer = new TabItem
-            {
-                Header = "temp",
-            };
-            ComputerTabs.Items.Add(newComputer);
-        }
-        private async void Get_Click(object sender, RoutedEventArgs e)
-        {
-            var baseMsg = new Packet(RequestType.Get, "");
-            await Connect(GetCurrentIP(), 300, baseMsg);
-            
+            await RefreshScreenFromServerNew(technicianUsername);
         }
         private async void Kill_Click(object sender, RoutedEventArgs e)
         {
             var selectedId = this.id;
             skipOneTime = true;
-            GetCurrentListBox().SelectedItem = null;
+            //GetCurrentListBox().SelectedItem = null;
             var baseMsg = new Packet(RequestType.Kill, selectedId);
             await Connect(GetCurrentIP(), 300, baseMsg);            
-        }
+        }        
         private void Rsc_Click(object sender, RoutedEventArgs e)
         {
-
+            New_Error_Window("button currently not in use", "error");
         }
-        
+        private void File_Click(object sender, RoutedEventArgs e)
+        {
+            // Get the current time
+            DateTime now = DateTime.Now;
+
+            // Format the current time as a string for the file name
+            string fileName = now.ToString("HH-mm-ss") + ".txt";
+
+            // Get the path to the desktop
+            string desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+
+            // Combine the desktop path with the file name
+            string filePath = System.IO.Path.Combine(desktopPath, fileName);
+
+            var sb = new StringBuilder();
+            foreach (var item in itemsDictionary.Values)
+            {
+                sb.Append(item.ToString());
+                sb.Append('\n');
+            }
+
+            // Define the content to write into the file
+            string content = sb.ToString();
+
+            // Create and write to the file
+            File.WriteAllText(filePath, content);
+
+            New_Error_Window("file generated", "file");
+        }
+
+        private void New_Error_Window(string error, string title)
+        {
+            ErrorWindow errorWindow = new ErrorWindow();
+            errorWindow.Title = title;
+            errorWindow.ErrorWin.Text = error;
+            errorWindow.Show();
+        }
 
         //search box
         private string search = "";
@@ -203,174 +230,176 @@ namespace RemoteSync
 
             return result;
         } 
-        private async Task RefreshScreenFromServer(string username)
-        {
-            var serverClientList = await MongoDBfunctions.GetAllClientsAsync(username);
-            bool exist = false;
+        
+        //old refresh
+        //private async Task RefreshScreenFromServer(string username)
+        //{
+        //    var serverClientList = await MongoDBfunctions.GetAllClientsAsync(username);
+        //    bool exist = false;
 
-            if (serverClientList != null)
-            {
-                if (clientsNumber == 0)
-                {
-                    //client list is empty, add all of the client from mongo
-                    foreach (var tuple in serverClientList)
-                    {
-                        currentClientList.Add(tuple);
-                        clientsNumber++;
+        //    if (serverClientList != null)
+        //    {
+        //        if (clientsNumber == 0)
+        //        {
+        //            //client list is empty, add all of the client from mongo
+        //            foreach (var tuple in serverClientList)
+        //            {
+        //                currentClientList.Add(tuple);
+        //                clientsNumber++;
 
-                        //add here the new tab for the client
-                        TabItem newTabItem = new TabItem
-                        {
-                            Header = tuple.Item1.ToString()
-                        };
-                        ListBox listbox = new ListBox();
-                        listbox.Name = tuple.Item1.ToString() + "_listbox";
-                        listbox.Height = 600;
+        //                //add here the new tab for the client
+        //                TabItem newTabItem = new TabItem
+        //                {
+        //                    Header = tuple.Item1.ToString()
+        //                };
+        //                ListBox listbox = new ListBox();
+        //                listbox.Name = tuple.Item1.ToString() + "_listbox";
+        //                listbox.Height = 600;
 
-                        newTabItem.Content = listbox;
-                        listbox.SelectionChanged += MainListBox_SelectionChanged; //enables the useage of the MainListBox_SelectionChanged function                        
-                        listbox.ItemTemplate = ListItemTemplate();
+        //                newTabItem.Content = listbox;
+        //                listbox.SelectionChanged += MainListBox_SelectionChanged; //enables the useage of the MainListBox_SelectionChanged function                        
+        //                listbox.ItemTemplate = ListItemTemplate();
 
-                        CmpTabs.Items.Add(newTabItem);
+        //                CmpTabs.Items.Add(newTabItem);
 
-                    }
-                }
-                else
-                {
-                    foreach (var tuple in serverClientList)
-                    {
-                        foreach (var client in currentClientList)
-                        {
-                            if (client.Item2 == tuple.Item2)
-                            {
-                                exist = true;
-                                break;
-                            }
-                        }
-                        if (exist == false)
-                        {
-                            //the current client is not inside the tabs, so we will add it
-                            currentClientList.Add(tuple);
-                            clientsNumber++;
+        //            }
+        //        }
+        //        else
+        //        {
+        //            foreach (var tuple in serverClientList)
+        //            {
+        //                foreach (var client in currentClientList)
+        //                {
+        //                    if (client.Item2 == tuple.Item2)
+        //                    {
+        //                        exist = true;
+        //                        break;
+        //                    }
+        //                }
+        //                if (exist == false)
+        //                {
+        //                    //the current client is not inside the tabs, so we will add it
+        //                    currentClientList.Add(tuple);
+        //                    clientsNumber++;
                             
-                            //add here the new tab for the client
-                            TabItem newTabItem = new TabItem
-                            {
-                                Header = tuple.Item1.ToString()
-                            };
-                            ListBox listbox = new ListBox();
-                            listbox.Name = tuple.Item1.ToString() + "_listbox";
-                            listbox.Height = 600;
+        //                    //add here the new tab for the client
+        //                    TabItem newTabItem = new TabItem
+        //                    {
+        //                        Header = tuple.Item1.ToString()
+        //                    };
+        //                    ListBox listbox = new ListBox();
+        //                    listbox.Name = tuple.Item1.ToString() + "_listbox";
+        //                    listbox.Height = 600;
 
-                            newTabItem.Content = listbox;
-                            listbox.SelectionChanged += MainListBox_SelectionChanged;
-                            listbox.ItemTemplate= ListItemTemplate();
+        //                    newTabItem.Content = listbox;
+        //                    listbox.SelectionChanged += MainListBox_SelectionChanged;
+        //                    listbox.ItemTemplate= ListItemTemplate();
 
-                            CmpTabs.Items.Add(newTabItem);
+        //                    CmpTabs.Items.Add(newTabItem);
 
-                        }
-                    }
-                }
-            }
-            if (currentClientList != null)
-            {
-                foreach (var client in currentClientList.ToList())
-                {
-                    var name = client.Item1;
-                    var ip = client.Item2;
-                    var id = client.Item3;
+        //                }
+        //            }
+        //        }
+        //    }
+        //    if (currentClientList != null)
+        //    {
+        //        foreach (var client in currentClientList.ToList())
+        //        {
+        //            var name = client.Item1;
+        //            var ip = client.Item2;
+        //            var id = client.Item3;
 
-                    ListBox clientListBox = new ListBox();
+        //            ListBox clientListBox = new ListBox();
 
-                    try //try to update the process list for each client, if falied, client has disconnected
-                    {
-                        foreach (var item in ComputerTabs.Items)
-                        {
-                            var tab = item as TabItem;
-                            if (tab != null)
-                            {
-                                if (tab.Header != null && tab.Header.ToString() == name)
-                                {
-                                    clientListBox = tab.Content as ListBox;
-                                }
-                            }
-                        }
+        //            try //try to update the process list for each client, if falied, client has disconnected
+        //            {
+        //                foreach (var item in ComputerTabs.Items)
+        //                {
+        //                    var tab = item as TabItem;
+        //                    if (tab != null)
+        //                    {
+        //                        if (tab.Header != null && tab.Header.ToString() == name)
+        //                        {
+        //                            clientListBox = tab.Content as ListBox;
+        //                        }
+        //                    }
+        //                }
 
-                        var newProcesses = await GetProcesscesFromServer(ip);
-                        Dispatcher.Invoke(() => UpdateProcessList(newProcesses, clientListBox));
-                    }
-                    catch (Exception e)
-                    {
-                        currentClientList.Remove(client);
-                        RemoveCurrentTab(name);
-                        clientsNumber--;
-                        await MongoDBfunctions.RemoveDisconnectedClientAsync(technicianUsername, ip);
-                    }
-                }
-            }
-        }
-        private ObservableCollection<ListItem> items = new ObservableCollection<ListItem>();
-        private void UpdateProcessList(List<(int, string, string)> newProcesses, ListBox clientListBox)
-        {
-            var ProcessesListItem = new List<ListItem>();
-            // Convert newProcesses to ListItem objects
-            foreach (var process in newProcesses)
-            {
-                ListItem current = new ListItem { Name = process.Item2, ID = process.Item1, CPU = process.Item3 };
-                ProcessesListItem.Add(current);
-            }
+        //                var newProcesses = await GetProcesscesFromServer(ip);
+        //                Dispatcher.Invoke(() => UpdateProcessList(newProcesses, clientListBox));
+        //            }
+        //            catch (Exception e)
+        //            {
+        //                currentClientList.Remove(client);
+        //                RemoveCurrentTab(name);
+        //                clientsNumber--;
+        //                await MongoDBfunctions.RemoveDisconnectedClientAsync(technicianUsername, ip);
+        //            }
+        //        }
+        //    }
+        //}
+        //private ObservableCollection<ListItem> items = new ObservableCollection<ListItem>();
+        //private void UpdateProcessList(List<(int, string, string)> newProcesses, ListBox clientListBox)
+        //{
+        //    var ProcessesListItem = new List<ListItem>();
+        //    // Convert newProcesses to ListItem objects
+        //    foreach (var process in newProcesses)
+        //    {
+        //        ListItem current = new ListItem { Name = process.Item2, ID = process.Item1, CPU = process.Item3 };
+        //        ProcessesListItem.Add(current);
+        //    }
 
-            ListBox currentListBox = clientListBox;
+        //    ListBox currentListBox = clientListBox;
 
-            // Remove duplicates from the ListBox
-            foreach (var newItem in ProcessesListItem)
-            {
-                bool alreadyExists = false;
-                foreach (var listBoxItem in currentListBox.Items)
-                {
-                    var existingItem = listBoxItem as ListItem;
-                    if (existingItem != null && existingItem.ID == newItem.ID && existingItem.Name == newItem.Name)
-                    {
-                        alreadyExists = true;
-                        break;
-                    }
-                }
-                if (!alreadyExists)
-                {
-                    // Add new item to ListBox only if it contains the search term
-                    if (search == "" || newItem.Name.Contains(search))
-                    {
-                        items.Add(newItem);
-                        currentListBox.Items.Add(newItem);
-                    }
-                }
-            }
+        //    // Remove duplicates from the ListBox
+        //    foreach (var newItem in ProcessesListItem)
+        //    {
+        //        bool alreadyExists = false;
+        //        foreach (var listBoxItem in currentListBox.Items)
+        //        {
+        //            var existingItem = listBoxItem as ListItem;
+        //            if (existingItem != null && existingItem.ID == newItem.ID && existingItem.Name == newItem.Name)
+        //            {
+        //                alreadyExists = true;
+        //                break;
+        //            }
+        //        }
+        //        if (!alreadyExists)
+        //        {
+        //            // Add new item to ListBox only if it contains the search term
+        //            if (search == "" || newItem.Name.Contains(search))
+        //            {
+        //                items.Add(newItem);
+        //                currentListBox.Items.Add(newItem);
+        //            }
+        //        }
+        //    }
 
-            // Remove items that do not exist in newProcesses
-            for (int i = currentListBox.Items.Count - 1; i >= 0; i--)
-            {
-                var item = currentListBox.Items[i] as ListItem;
-                if (item != null && !ProcessesListItem.Any(p => p.ID == item.ID && p.Name == item.Name))
-                {
-                    currentListBox.Items.RemoveAt(i);
-                }
-            }
-            // Remove items that do not contain the search term
-            if (search != "")
-            {
-                for (int i = currentListBox.Items.Count - 1; i >= 0; i--)
-                {
-                    var item = currentListBox.Items[i] as ListItem;
-                    if (item != null && !item.Name.Contains(search))
-                    {
-                        currentListBox.Items.RemoveAt(i);
-                    }
-                }
-            }
+        //    // Remove items that do not exist in newProcesses
+        //    for (int i = currentListBox.Items.Count - 1; i >= 0; i--)
+        //    {
+        //        var item = currentListBox.Items[i] as ListItem;
+        //        if (item != null && !ProcessesListItem.Any(p => p.ID == item.ID && p.Name == item.Name))
+        //        {
+        //            currentListBox.Items.RemoveAt(i);
+        //        }
+        //    }
+        //    // Remove items that do not contain the search term
+        //    if (search != "")
+        //    {
+        //        for (int i = currentListBox.Items.Count - 1; i >= 0; i--)
+        //        {
+        //            var item = currentListBox.Items[i] as ListItem;
+        //            if (item != null && !item.Name.Contains(search))
+        //            {
+        //                currentListBox.Items.RemoveAt(i);
+        //            }
+        //        }
+        //    }
 
-        }
+        //}
 
-
+        private Dictionary<string, ProcessItem> itemsDictionary = new Dictionary<string, ProcessItem>();
         private void TreeView_SelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
         {
             // Get the TreeView
@@ -567,6 +596,7 @@ namespace RemoteSync
                     processTreeView.Items.Add(newItem);
                 }
             }
+            itemsDictionary = parentDictionary;
         }
 
 
@@ -583,7 +613,7 @@ namespace RemoteSync
         {
             // Initialize the timer
             timer = new DispatcherTimer();
-            timer.Interval = TimeSpan.FromMilliseconds(2000); // Set the interval to 1000 milliseconds = 1 second           
+            timer.Interval = TimeSpan.FromMilliseconds(1000); // Set the interval to 1000 milliseconds = 1 second           
             
             timer.Tick += async (sender, e) => await RefreshScreenFromServerNew(technicianUsername);
 
@@ -796,6 +826,7 @@ namespace RemoteSync
             
             return hierarchicalDataTemplate;
         }
+
     }
     public class ListItem
     {
@@ -813,6 +844,12 @@ namespace RemoteSync
         public ProcessItem()
         {
             Children = new ObservableCollection<ProcessItem>();
+        }
+
+        public override string ToString()
+        {
+            var childrenToString = string.Join("\n", Children.Select(c => c.ToString()));
+            return $"ID: {ID}, Name: {Name}, CPU: {CPU} {childrenToString}";
         }
     }
 }
