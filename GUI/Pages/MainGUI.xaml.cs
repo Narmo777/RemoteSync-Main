@@ -34,9 +34,12 @@ namespace RemoteSync
     {
         private string technicianUsername;
         public static List<Tuple<string, string,int>> currentClientList = new List<Tuple<string, string, int>>();
-        public static int clientsNumber = 0;
-        private static int clientIndex;
-                
+        public static int clientsNumber = 0;    //counts how many clients are connected
+        private static int clientIndex;         //variable that changes when going to another tab 
+        private string search = "";             //variable that changes according to search box
+        private string id;                      //variable that changes when a process is clicked in the listbox
+        private bool skipOneTime = false;       
+
         public MainGUI(string name)
         {
             technicianUsername = name;
@@ -51,8 +54,7 @@ namespace RemoteSync
         private async void Kill_Click(object sender, RoutedEventArgs e)
         {
             var selectedId = this.id;
-            skipOneTime = true;
-            //GetCurrentListBox().SelectedItem = null;
+            skipOneTime = true;            
             var baseMsg = new Packet(RequestType.Kill, selectedId);
             await Connect(GetCurrentIP(), 300, baseMsg);            
         }        
@@ -99,7 +101,6 @@ namespace RemoteSync
         }
 
         //search box
-        private string search = "";
         private void SearchBox_TextChanged(object sender, TextChangedEventArgs e)
         {
             if (Search.Text != "Search")
@@ -109,7 +110,7 @@ namespace RemoteSync
         {
             if (Search.Text == "Search")
                 Search.Text = string.Empty;
-        }
+        }       
 
         //connect the gui to the server
         public async Task Connect(string ip, int port, Packet p)
@@ -138,40 +139,6 @@ namespace RemoteSync
                 //RefreshProcesses();
             }
             stream.Close();
-        }
-
-
-        //if process is clicked, his id will be saved to this.id
-        private string id;
-        private bool skipOneTime = false;
-        private void MainListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if(skipOneTime)
-            {
-                skipOneTime = false;
-            }
-            else
-            {
-                //var selectedProcces = GetCurrentListBox().SelectedItem.ToString();
-                //string[] procces = selectedProcces.Split(',', '(');
-                //var proccesId = procces[1];
-
-                //this.id = proccesId;
-
-
-                ListBox currentListBox = GetCurrentListBox();
-                if (currentListBox.SelectedItem != null)
-                {
-                    // Cast the selected item to ListItem
-                    var selectedProcess = currentListBox.SelectedItem as ListItem;
-
-                    if (selectedProcess != null)
-                    {
-                        // Access the Part2 property
-                        this.id = selectedProcess.ID.ToString();
-                    }
-                }
-            }
         }
         
         //change index when going through tabs
@@ -229,175 +196,7 @@ namespace RemoteSync
             }
 
             return result;
-        } 
-        
-        //old refresh
-        //private async Task RefreshScreenFromServer(string username)
-        //{
-        //    var serverClientList = await MongoDBfunctions.GetAllClientsAsync(username);
-        //    bool exist = false;
-
-        //    if (serverClientList != null)
-        //    {
-        //        if (clientsNumber == 0)
-        //        {
-        //            //client list is empty, add all of the client from mongo
-        //            foreach (var tuple in serverClientList)
-        //            {
-        //                currentClientList.Add(tuple);
-        //                clientsNumber++;
-
-        //                //add here the new tab for the client
-        //                TabItem newTabItem = new TabItem
-        //                {
-        //                    Header = tuple.Item1.ToString()
-        //                };
-        //                ListBox listbox = new ListBox();
-        //                listbox.Name = tuple.Item1.ToString() + "_listbox";
-        //                listbox.Height = 600;
-
-        //                newTabItem.Content = listbox;
-        //                listbox.SelectionChanged += MainListBox_SelectionChanged; //enables the useage of the MainListBox_SelectionChanged function                        
-        //                listbox.ItemTemplate = ListItemTemplate();
-
-        //                CmpTabs.Items.Add(newTabItem);
-
-        //            }
-        //        }
-        //        else
-        //        {
-        //            foreach (var tuple in serverClientList)
-        //            {
-        //                foreach (var client in currentClientList)
-        //                {
-        //                    if (client.Item2 == tuple.Item2)
-        //                    {
-        //                        exist = true;
-        //                        break;
-        //                    }
-        //                }
-        //                if (exist == false)
-        //                {
-        //                    //the current client is not inside the tabs, so we will add it
-        //                    currentClientList.Add(tuple);
-        //                    clientsNumber++;
-                            
-        //                    //add here the new tab for the client
-        //                    TabItem newTabItem = new TabItem
-        //                    {
-        //                        Header = tuple.Item1.ToString()
-        //                    };
-        //                    ListBox listbox = new ListBox();
-        //                    listbox.Name = tuple.Item1.ToString() + "_listbox";
-        //                    listbox.Height = 600;
-
-        //                    newTabItem.Content = listbox;
-        //                    listbox.SelectionChanged += MainListBox_SelectionChanged;
-        //                    listbox.ItemTemplate= ListItemTemplate();
-
-        //                    CmpTabs.Items.Add(newTabItem);
-
-        //                }
-        //            }
-        //        }
-        //    }
-        //    if (currentClientList != null)
-        //    {
-        //        foreach (var client in currentClientList.ToList())
-        //        {
-        //            var name = client.Item1;
-        //            var ip = client.Item2;
-        //            var id = client.Item3;
-
-        //            ListBox clientListBox = new ListBox();
-
-        //            try //try to update the process list for each client, if falied, client has disconnected
-        //            {
-        //                foreach (var item in ComputerTabs.Items)
-        //                {
-        //                    var tab = item as TabItem;
-        //                    if (tab != null)
-        //                    {
-        //                        if (tab.Header != null && tab.Header.ToString() == name)
-        //                        {
-        //                            clientListBox = tab.Content as ListBox;
-        //                        }
-        //                    }
-        //                }
-
-        //                var newProcesses = await GetProcesscesFromServer(ip);
-        //                Dispatcher.Invoke(() => UpdateProcessList(newProcesses, clientListBox));
-        //            }
-        //            catch (Exception e)
-        //            {
-        //                currentClientList.Remove(client);
-        //                RemoveCurrentTab(name);
-        //                clientsNumber--;
-        //                await MongoDBfunctions.RemoveDisconnectedClientAsync(technicianUsername, ip);
-        //            }
-        //        }
-        //    }
-        //}
-        //private ObservableCollection<ListItem> items = new ObservableCollection<ListItem>();
-        //private void UpdateProcessList(List<(int, string, string)> newProcesses, ListBox clientListBox)
-        //{
-        //    var ProcessesListItem = new List<ListItem>();
-        //    // Convert newProcesses to ListItem objects
-        //    foreach (var process in newProcesses)
-        //    {
-        //        ListItem current = new ListItem { Name = process.Item2, ID = process.Item1, CPU = process.Item3 };
-        //        ProcessesListItem.Add(current);
-        //    }
-
-        //    ListBox currentListBox = clientListBox;
-
-        //    // Remove duplicates from the ListBox
-        //    foreach (var newItem in ProcessesListItem)
-        //    {
-        //        bool alreadyExists = false;
-        //        foreach (var listBoxItem in currentListBox.Items)
-        //        {
-        //            var existingItem = listBoxItem as ListItem;
-        //            if (existingItem != null && existingItem.ID == newItem.ID && existingItem.Name == newItem.Name)
-        //            {
-        //                alreadyExists = true;
-        //                break;
-        //            }
-        //        }
-        //        if (!alreadyExists)
-        //        {
-        //            // Add new item to ListBox only if it contains the search term
-        //            if (search == "" || newItem.Name.Contains(search))
-        //            {
-        //                items.Add(newItem);
-        //                currentListBox.Items.Add(newItem);
-        //            }
-        //        }
-        //    }
-
-        //    // Remove items that do not exist in newProcesses
-        //    for (int i = currentListBox.Items.Count - 1; i >= 0; i--)
-        //    {
-        //        var item = currentListBox.Items[i] as ListItem;
-        //        if (item != null && !ProcessesListItem.Any(p => p.ID == item.ID && p.Name == item.Name))
-        //        {
-        //            currentListBox.Items.RemoveAt(i);
-        //        }
-        //    }
-        //    // Remove items that do not contain the search term
-        //    if (search != "")
-        //    {
-        //        for (int i = currentListBox.Items.Count - 1; i >= 0; i--)
-        //        {
-        //            var item = currentListBox.Items[i] as ListItem;
-        //            if (item != null && !item.Name.Contains(search))
-        //            {
-        //                currentListBox.Items.RemoveAt(i);
-        //            }
-        //        }
-        //    }
-
-        //}
+        }                 
 
         private Dictionary<string, ProcessItem> itemsDictionary = new Dictionary<string, ProcessItem>();
         private void TreeView_SelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
@@ -596,9 +395,18 @@ namespace RemoteSync
                     processTreeView.Items.Add(newItem);
                 }
             }
+            // Additional loop to remove items that don't contain the search string
+            currentItems = processTreeView.Items.Cast<ProcessItem>().ToList();
+            foreach (var item in currentItems)
+            {
+                if (!item.Name.ToLower().Contains(search))
+                {
+                    processTreeView.Items.Remove(item);
+                }
+            }
             itemsDictionary = parentDictionary;
-        }
 
+        }
 
         //refresh the clients
         public static TabControl CmpTabs;
@@ -632,24 +440,26 @@ namespace RemoteSync
 
             return currentClientIP;
         }
-        public ListBox GetCurrentListBox()
+        public TreeView GetCurrentTreeView()
         {
-            ListBox currentlistbox = new ListBox();
-            string targetHeader = "";
-            foreach (var client in currentClientList)
+            var header = "";
+            var returnTreeView = new TreeView();
+            foreach(var client in currentClientList)
             {
-                if (client.Item3 == clientIndex)
-                    targetHeader = client.Item1;
-            }
-            foreach (var item in ComputerTabs.Items)
-            {
-                if (item is TabItem tabItem && tabItem.Header != null && tabItem.Header.ToString() == targetHeader)
+                if(client.Item3 == clientIndex)
                 {
-                    currentlistbox = tabItem.Content as ListBox;
+                    header = client.Item2;
                 }
             }
-
-            return currentlistbox;
+            foreach(var item in ComputerTabs.Items)
+            {
+                TabItem tb = item as TabItem;
+                if(tb.Header == header)
+                {
+                    returnTreeView = tb.Content as TreeView;
+                }
+            }
+            return returnTreeView;
         }
         public void RemoveCurrentTab(string header)
         {
@@ -672,92 +482,6 @@ namespace RemoteSync
             }
         }
 
-        public DataTemplate ListItemTemplate()
-        {
-            DataTemplate dataTemplate = new DataTemplate(typeof(ListItem));
-
-            // Create a StackPanel as the root of the template
-            FrameworkElementFactory stackPanelFactory = new FrameworkElementFactory(typeof(StackPanel));
-            stackPanelFactory.SetValue(StackPanel.OrientationProperty, Orientation.Horizontal);
-
-            // Create the first TextBlock and bind it to Part1
-            FrameworkElementFactory textBlock1Factory = new FrameworkElementFactory(typeof(TextBlock));
-            textBlock1Factory.SetBinding(TextBlock.TextProperty, new Binding("Name"));
-            textBlock1Factory.SetValue(TextBlock.MarginProperty, new Thickness(5));
-            textBlock1Factory.SetValue(TextBlock.WidthProperty, 200.0);
-
-            // Create the second TextBlock and bind it to Part2
-            FrameworkElementFactory textBlock2Factory = new FrameworkElementFactory(typeof(TextBlock));
-            textBlock2Factory.SetBinding(TextBlock.TextProperty, new Binding("ID"));
-            textBlock2Factory.SetValue(TextBlock.MarginProperty, new Thickness(5));
-            textBlock2Factory.SetValue(TextBlock.WidthProperty, 200.0);
-
-            // Create the thrid TextBlock and bind it to Part3
-            FrameworkElementFactory textBlock3Factory = new FrameworkElementFactory(typeof(TextBlock));
-            textBlock3Factory.SetBinding(TextBlock.TextProperty, new Binding("CPU"));
-            textBlock3Factory.SetValue(TextBlock.MarginProperty, new Thickness(5));
-            textBlock3Factory.SetValue(TextBlock.WidthProperty, 200.0);
-
-            // Add the TextBlocks to the StackPanel
-            stackPanelFactory.AppendChild(textBlock1Factory);
-            stackPanelFactory.AppendChild(textBlock2Factory);
-            stackPanelFactory.AppendChild(textBlock3Factory);
-
-            // Set the VisualTree of the DataTemplate
-            dataTemplate.VisualTree = stackPanelFactory;
-
-            // return DataTemplate
-            return dataTemplate;
-        }
-        public DataTemplate ListViewDataTemplate()
-        {
-            DataTemplate dataTemplate = new DataTemplate();
-            FrameworkElementFactory stackPanelFactory = new FrameworkElementFactory(typeof(StackPanel));
-            stackPanelFactory.SetValue(StackPanel.OrientationProperty, Orientation.Horizontal);
-
-            FrameworkElementFactory nameTextBlock = new FrameworkElementFactory(typeof(TextBlock));
-            nameTextBlock.SetBinding(TextBlock.TextProperty, new System.Windows.Data.Binding("Name"));
-            nameTextBlock.SetValue(TextBlock.MarginProperty, new Thickness(5));
-            nameTextBlock.SetValue(TextBlock.WidthProperty, 100.0);
-            stackPanelFactory.AppendChild(nameTextBlock);
-
-            FrameworkElementFactory idTextBlock = new FrameworkElementFactory(typeof(TextBlock));
-            idTextBlock.SetBinding(TextBlock.TextProperty, new System.Windows.Data.Binding("ID"));
-            idTextBlock.SetValue(TextBlock.MarginProperty, new Thickness(5));
-            idTextBlock.SetValue(TextBlock.WidthProperty, 50.0);
-            stackPanelFactory.AppendChild(idTextBlock);
-
-            FrameworkElementFactory cpuTextBlock = new FrameworkElementFactory(typeof(TextBlock));
-            cpuTextBlock.SetBinding(TextBlock.TextProperty, new System.Windows.Data.Binding("CPU"));
-            cpuTextBlock.SetValue(TextBlock.MarginProperty, new Thickness(5));
-            cpuTextBlock.SetValue(TextBlock.WidthProperty, 100.0);
-            stackPanelFactory.AppendChild(cpuTextBlock);
-
-            dataTemplate.VisualTree = stackPanelFactory;
-            return dataTemplate;
-        }
-        public GridView ListViewGrid()
-        {
-            // Create and configure the GridView
-            GridView gridView = new GridView();
-            gridView.Columns.Add(new GridViewColumn
-            {
-                Header = "Name",
-                DisplayMemberBinding = new System.Windows.Data.Binding("Name")
-            }); //Name 
-            gridView.Columns.Add(new GridViewColumn
-            {
-                Header = "Id",
-                DisplayMemberBinding = new System.Windows.Data.Binding("Id")
-            }); //Id
-            gridView.Columns.Add(new GridViewColumn
-            {
-                Header = "CPU",
-                DisplayMemberBinding = new System.Windows.Data.Binding("CPU")
-            }); //CPU
-
-            return gridView;
-        }
         private HierarchicalDataTemplate CreateTreeView()
         {
             // Create the TreeView
@@ -826,13 +550,6 @@ namespace RemoteSync
             
             return hierarchicalDataTemplate;
         }
-
-    }
-    public class ListItem
-    {
-        public string Name { get; set; }
-        public int ID { get; set; }
-        public string CPU { get; set; }
     }
     public class ProcessItem
     {

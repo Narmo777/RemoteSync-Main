@@ -11,6 +11,8 @@ using MongoDB.Bson;
 using MongoDB.Driver;
 using ConsoleApp2.MongoDB;
 using System.Threading;
+using System.Runtime.InteropServices;
+using System.Security.Cryptography;
 
 namespace Server
 {
@@ -19,7 +21,6 @@ namespace Server
     {
         private TcpListener listener;
         public static string GetLocalIPAddress() => Dns.GetHostEntry(Dns.GetHostName()).AddressList.First(ip => ip.AddressFamily == AddressFamily.InterNetwork).ToString();
-        //public const string IP = "127.0.0.1";
         public string IP = GetLocalIPAddress();
         public const int PORT = 300;
         public Server(string name, string technician)
@@ -68,12 +69,13 @@ namespace Server
                     }
                     catch (Exception)
                     {
-                        
+
                     }
-                    finally {
-                        await stream.WriteAsync((byte[])responcePacket,0, responcePacket.DataSize + Packet.HeaderSize);
+                    finally
+                    {
+                        await stream.WriteAsync((byte[])responcePacket, 0, responcePacket.DataSize + Packet.HeaderSize);
                         await Console.Out.WriteLineAsync($"wrote {responcePacket.GetContentAsString()}");
-                        
+
                         stream.Close();
                     }
                 }
@@ -85,7 +87,7 @@ namespace Server
                 await Console.Out.WriteLineAsync($"Error with client - {e}");
             }
         }
-        
+
         //all buttons 
         private Packet HandleRscRequest(ref Packet p)
         {
@@ -113,11 +115,6 @@ namespace Server
         }
         private Packet HandleKillRequest(ref Packet p)
         {
-            
-            //var id = GetProcessIdFrom(ref p);
-            //Process process = Process.GetProcessById(id);
-            //process.Kill();
-            //Process.GetProcessById(id).Kill();
 
             var id = int.Parse(p.GetContentAsString());
             int processIdToKill = id;
@@ -125,12 +122,18 @@ namespace Server
             
             try
             {
-                // Get the process by its ID
-                Process processToKill = Process.GetProcessById(processIdToKill);
+                var process = Process.GetProcessById(processIdToKill);
+                var childProcesses = GetChildProcesses(processIdToKill);
 
-                // Kill the process
-                processToKill.Kill();
-                
+                // Kill child processes
+                foreach (var child in childProcesses)
+                {
+                    child.Kill();
+                }
+
+                // Kill the main process
+                process.Kill();
+
                 msg = $"Process with ID {processIdToKill} has been killed.";
             }
             catch (ArgumentException)
@@ -147,68 +150,58 @@ namespace Server
         }
         private Packet HandleGetRequest()
         {
-            var process = Process.GetProcesses();
-
-            var data = process.Select(p => $"{p.Id}|{p.ProcessName}").Aggregate((s1, s2) => $"{s1}#{s2}");
-
-
-            return new Packet(RequestType.Ok,data);
-        }
-        private Packet HandleGetRequestNew()
-        {
             var processes = Process.GetProcesses();
-            //StringBuilder totalDataBuilder = new StringBuilder();
-            string totalDataBuilder = "";
+            var parentProcesses = new List<Process>();
+            var childProcesses = new List<Process>();
 
-
+            // Classify processes into parent and child lists
             foreach (Process process in processes)
             {
-                string data = "";
-                if(totalDataBuilder.Length > 0)
+                int parentPid = GetParentProcessId(process.Id);
+                if (parentPid == 0 || parentPid == process.Id)
                 {
-                    totalDataBuilder += '|';
+                    parentProcesses.Add(process);
                 }
-
-                try
+                else
                 {
-                    // Capture the initial CPU usage time
-                    TimeSpan startCpuUsage = process.TotalProcessorTime;
-                    DateTime startTime = DateTime.Now;
-
-                    // Wait for a short period to capture CPU usage over time
-                    Thread.Sleep(10);
-
-                    // Capture the end CPU usage time
-                    TimeSpan endCpuUsage = process.TotalProcessorTime;
-                    DateTime endTime = DateTime.Now;
-
-                    // Calculate the CPU usage over the interval
-                    double cpuUsedMs = (endCpuUsage - startCpuUsage).TotalMilliseconds;
-                    double intervalMs = (endTime - startTime).TotalMilliseconds;
-                    double cpuUsagePercentage = (cpuUsedMs / (Environment.ProcessorCount * intervalMs)) * 100;
-
-                    data = $"{process.Id}#{process.ProcessName}#{cpuUsagePercentage.ToString().Substring(0, 5)}%";
-                }
-                catch (Exception ex)
-                {
-                    data = $"{process.Id}#{process.ProcessName}#{000}%";
-                }
-                finally
-                {
-                    totalDataBuilder += data;
+                    childProcesses.Add(process);
                 }
             }
 
-            string TotalData = totalDataBuilder.ToString();
-            return new Packet(RequestType.Ok, TotalData);
+            string totalDataBuilder = "";
+
+            // Process parent processes
+            foreach (Process process in parentProcesses)
+            {
+                string data = GetProcessData(process);
+                if (totalDataBuilder.Length > 0)
+                {
+                    totalDataBuilder += '|';
+                }
+                totalDataBuilder += data;
+            }
+
+            // Process child processes
+            foreach (Process process in childProcesses)
+            {
+                string data = GetProcessData(process);
+                if (totalDataBuilder.Length > 0)
+                {
+                    totalDataBuilder += '|';
+                }
+                totalDataBuilder += data;
+            }
+
+            string totalData = totalDataBuilder.ToString();
+            return new Packet(RequestType.Ok, totalData);
         }
-        
+
         public Packet HandleRequest(ref Packet p)
         {
             switch (p.RequestType)
             {
                 case RequestType.Get:
-                    return HandleGetRequestNew();
+                    return HandleGetRequest();
                 case RequestType.Kill:
                     return HandleKillRequest(ref p);
                 case RequestType.Rsc:
@@ -220,6 +213,112 @@ namespace Server
         private int GetProcessIdFrom(ref Packet p)
         {
             return BitConverter.ToInt32(p.Data, 0);
-        }       
+        }
+
+        //helpers for get request
+        private string GetProcessData(Process process)
+        {
+            string data = "";
+            try
+            {
+                // Capture the initial CPU usage time
+                TimeSpan startCpuUsage = process.TotalProcessorTime;
+                DateTime startTime = DateTime.Now;
+
+                // Wait for a short period to capture CPU usage over time
+                Thread.Sleep(10);
+
+                // Capture the end CPU usage time
+                TimeSpan endCpuUsage = process.TotalProcessorTime;
+                DateTime endTime = DateTime.Now;
+
+                // Calculate the CPU usage over the interval
+                double cpuUsedMs = (endCpuUsage - startCpuUsage).TotalMilliseconds;
+                double intervalMs = (endTime - startTime).TotalMilliseconds;
+                double cpuUsagePercentage = (cpuUsedMs / (Environment.ProcessorCount * intervalMs)) * 100;
+
+                data = $"{process.Id}#{process.ProcessName}#{cpuUsagePercentage.ToString("F2")}%";
+            }
+            catch (Exception)
+            {
+                data = $"{process.Id}#{process.ProcessName}#0.00%";
+            }
+            return data;
+        }
+        public int GetParentProcessId(int processId)
+        {
+            int parentPid = 0;
+            try
+            {
+                using (Process process = Process.GetProcessById(processId))
+                {
+                    // Allocate a handle for the process query
+                    IntPtr hProcess = OpenProcess(ProcessAccessFlags.QueryInformation, false, processId);
+                    if (hProcess != IntPtr.Zero)
+                    {
+                        try
+                        {
+                            PROCESS_BASIC_INFORMATION pbi = new PROCESS_BASIC_INFORMATION();
+                            int returnLength = 0;
+                            int status = NtQueryInformationProcess(hProcess, 0, ref pbi, Marshal.SizeOf(pbi), ref returnLength);
+                            if (status == 0)
+                            {
+                                parentPid = pbi.InheritedFromUniqueProcessId.ToInt32();
+                            }
+                        }
+                        finally
+                        {
+                            CloseHandle(hProcess);
+                        }
+                    }
+                }
+            }
+            catch
+            {
+                // If unable to get the parent process, return 0
+                parentPid = 0;
+            }
+            return parentPid;
+        }
+        [StructLayout(LayoutKind.Sequential)]
+        public struct PROCESS_BASIC_INFORMATION
+        {
+            public IntPtr Reserved1;
+            public IntPtr PebBaseAddress;
+            public IntPtr Reserved2_0;
+            public IntPtr Reserved2_1;
+            public IntPtr UniqueProcessId;
+            public IntPtr InheritedFromUniqueProcessId;
+        }
+
+        [DllImport("ntdll.dll")]
+        public static extern int NtQueryInformationProcess(IntPtr processHandle, int processInformationClass, ref PROCESS_BASIC_INFORMATION processInformation, int processInformationLength, ref int returnLength);
+
+        [DllImport("kernel32.dll")]
+        private static extern bool CloseHandle(IntPtr hObject);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern IntPtr OpenProcess(ProcessAccessFlags processAccess, bool bInheritHandle, int processId);
+
+        [Flags]
+        public enum ProcessAccessFlags : uint
+        {
+            QueryInformation = 0x00000400
+        }
+
+        //helpers for kill request
+        private List<Process> GetChildProcesses(int parentPid)
+        {
+            var childProcesses = new List<Process>();
+            var processes = Process.GetProcesses();
+            foreach (var process in processes)
+            {
+                if (GetParentProcessId(process.Id) == parentPid)
+                {
+                    childProcesses.Add(process);
+                }                
+            }
+            return childProcesses;
+        }
     }
 }
