@@ -47,12 +47,23 @@ namespace RemoteSync
             InitTimer();
         }
         
+
         public async void Refresh_Click(object sender, RoutedEventArgs e)
         {
+            /// <summary>
+            /// Event handler for the Refresh button click event. 
+            /// Refreshes the screen from the server asynchronously using the technician's username.
+            /// </summary>
+
             await RefreshScreenFromServerNew(technicianUsername);
         }
         private async void Kill_Click(object sender, RoutedEventArgs e)
         {
+            /// <summary>
+            /// Event handler for the Kill button click event. 
+            /// Sends a kill request packet to the server asynchronously with the currently selected ID.
+            /// </summary>
+
             var selectedId = this.id;
             skipOneTime = true;            
             var baseMsg = new Packet(RequestType.Kill, selectedId);
@@ -60,10 +71,20 @@ namespace RemoteSync
         }        
         private void Rsc_Click(object sender, RoutedEventArgs e)
         {
+            /// <summary>
+            /// Event handler for the Rsc button click event.
+            /// Displays an error window indicating the button is not in use.
+            /// </summary>
+
             New_Error_Window("button currently not in use", "error");
         }
         private void File_Click(object sender, RoutedEventArgs e)
         {
+            /// <summary>
+            /// Event handler for the File button click event. 
+            /// Generates a text file on the desktop with the current time as its name, containing values from a dictionary.
+            /// </summary>
+
             // Get the current time
             DateTime now = DateTime.Now;
 
@@ -94,6 +115,10 @@ namespace RemoteSync
 
         private void New_Error_Window(string error, string title)
         {
+            /// <summary>
+            /// Displays a new error window with a specified error message and title.
+            /// </summary>
+
             ErrorWindow errorWindow = new ErrorWindow();
             errorWindow.Title = title;
             errorWindow.ErrorWin.Text = error;
@@ -405,7 +430,6 @@ namespace RemoteSync
                 }
             }
             itemsDictionary = parentDictionary;
-
         }
 
         //refresh the clients
@@ -488,9 +512,6 @@ namespace RemoteSync
 
         private HierarchicalDataTemplate CreateTreeView()
         {
-            // Create the TreeView
-            TreeView processTreeView = new TreeView();
-
             // Define the HierarchicalDataTemplate for the TreeView items
             HierarchicalDataTemplate hierarchicalDataTemplate = new HierarchicalDataTemplate();
             hierarchicalDataTemplate.ItemsSource = new Binding("Children");
@@ -553,6 +574,44 @@ namespace RemoteSync
             hierarchicalDataTemplate.ItemTemplate = innerDataTemplate;
             
             return hierarchicalDataTemplate;
+        }
+        private void AddHeader(TreeView tree)
+        {
+            // Create the header item
+            TreeViewItem headerItem = new TreeViewItem();
+            headerItem.IsExpanded = true;
+            headerItem.IsEnabled = false; // Make the header item non-interactive
+
+            // Create the StackPanel for the header
+            StackPanel headerStackPanel = new StackPanel();
+            headerStackPanel.Orientation = Orientation.Horizontal;
+
+            // Create the header TextBlocks
+            TextBlock headerNameTextBlock = new TextBlock();
+            headerNameTextBlock.Text = "Name";
+            headerNameTextBlock.Margin = new Thickness(5);
+            headerNameTextBlock.Width = 200.0;
+
+            TextBlock headerIdTextBlock = new TextBlock();
+            headerIdTextBlock.Text = "ID";
+            headerIdTextBlock.Margin = new Thickness(5);
+            headerIdTextBlock.Width = 100.0;
+
+            TextBlock headerCpuTextBlock = new TextBlock();
+            headerCpuTextBlock.Text = "CPU";
+            headerCpuTextBlock.Margin = new Thickness(5);
+            headerCpuTextBlock.Width = 100.0;
+
+            // Add header TextBlocks to header StackPanel
+            headerStackPanel.Children.Add(headerNameTextBlock);
+            headerStackPanel.Children.Add(headerIdTextBlock);
+            headerStackPanel.Children.Add(headerCpuTextBlock);
+
+            // Add the header StackPanel to the header TreeViewItem
+            headerItem.Header = headerStackPanel;
+
+            // Insert the header item as the first item in the TreeView
+            tree.Items.Insert(0, headerItem);
         }
     }
     public class ProcessItem
