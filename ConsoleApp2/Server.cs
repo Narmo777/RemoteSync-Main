@@ -123,16 +123,21 @@ namespace Server
             try
             {
                 var process = Process.GetProcessById(processIdToKill);
-                var childProcesses = GetChildProcesses(processIdToKill);
+                var childProcesses = Process.GetProcessesByName(process.ProcessName);
 
-                // Kill child processes
-                foreach (var child in childProcesses)
+                if(childProcesses.Length > 0)
                 {
-                    child.Kill();
+                    // Kill child processes
+                    foreach (var child in childProcesses)
+                    {
+                        child.Kill();
+                    }
                 }
-
-                // Kill the main process
-                process.Kill();
+                else
+                {
+                    // Kill the main process
+                    process.Kill();
+                }
 
                 msg = $"Process with ID {processIdToKill} has been killed.";
             }

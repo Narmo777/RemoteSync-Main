@@ -104,7 +104,7 @@ namespace RemoteSync
         private void SearchBox_TextChanged(object sender, TextChangedEventArgs e)
         {
             if (Search.Text != "Search")
-                this.search = Search.Text;
+                this.search = Search.Text;           
         }
         private void SearchTextBox_MouseDown(object sender, MouseButtonEventArgs e)
         {
@@ -442,24 +442,28 @@ namespace RemoteSync
         }
         public TreeView GetCurrentTreeView()
         {
-            var header = "";
-            var returnTreeView = new TreeView();
-            foreach(var client in currentClientList)
+            if(currentClientList.Count > 0)
             {
-                if(client.Item3 == clientIndex)
+                var header = "";
+                var returnTreeView = new TreeView();
+                foreach (var client in currentClientList)
                 {
-                    header = client.Item2;
+                    if (client.Item3 == clientIndex)
+                    {
+                        header = client.Item2;
+                    }
                 }
-            }
-            foreach(var item in ComputerTabs.Items)
-            {
-                TabItem tb = item as TabItem;
-                if(tb.Header == header)
+                foreach (var item in ComputerTabs.Items)
                 {
-                    returnTreeView = tb.Content as TreeView;
+                    TabItem tb = item as TabItem;
+                    if (tb.Header == header)
+                    {
+                        returnTreeView = tb.Content as TreeView;
+                    }
                 }
+                return returnTreeView;
             }
-            return returnTreeView;
+            return null;
         }
         public void RemoveCurrentTab(string header)
         {
