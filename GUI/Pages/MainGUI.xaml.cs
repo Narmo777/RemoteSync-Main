@@ -200,22 +200,22 @@ namespace RemoteSync
                 }
             }
         }
-        public async Task<List<(int, string, string)>> GetProcesscesFromServer(string ip) 
+        public async Task<List<(int, string, string, string)>> GetProcesscesFromServer(string ip) 
         {
             var requset = await SendRequest(new Packet(RequestType.Get, ""), ip);
             var content = requset.GetContentAsString();
 
-            var result = new List<(int, string, string)>();
+            var result = new List<(int, string, string, string)>();
 
             var parts = content.Split('|');
             foreach (var part in parts)
             {
                 var components = part.Split('#');
-                if (components.Length == 3)
+                if (components.Length == 4)
                 {
                     if (int.TryParse(components[0], out int number))
                     {
-                        result.Add((number, components[1], components[2]));
+                        result.Add((number, components[1], components[2], components[3]));
                     }
                 }
             }
@@ -358,14 +358,14 @@ namespace RemoteSync
                 }
             }
         }
-        private void UpdateProcessListNew(List<(int, string, string)> newProcesses, TreeView processTreeView)
+        private void UpdateProcessListNew(List<(int, string, string, string)> newProcesses, TreeView processTreeView)
         {
             // Dictionary to store parent process items by name
             var parentDictionary = new Dictionary<string, ProcessItem>();
 
             foreach (var process in newProcesses)
             {
-                var newItem = new ProcessItem { ID = process.Item1, Name = process.Item2, CPU = process.Item3 };
+                var newItem = new ProcessItem { ID = process.Item1, Name = process.Item2, CPU = process.Item3, Net = process.Item4};
 
                 if (parentDictionary.ContainsKey(newItem.Name))
                 {
@@ -445,7 +445,7 @@ namespace RemoteSync
         {
             // Initialize the timer
             timer = new DispatcherTimer();
-            timer.Interval = TimeSpan.FromMilliseconds(1000); // Set the interval to 1000 milliseconds = 1 second           
+            timer.Interval = TimeSpan.FromMilliseconds(2000); // Set the interval to 1000 milliseconds = 1 second           
             
             timer.Tick += async (sender, e) => await RefreshScreenFromServerNew(technicianUsername);
 
@@ -536,10 +536,16 @@ namespace RemoteSync
             cpuTextBlock.SetValue(TextBlock.MarginProperty, new Thickness(5));
             cpuTextBlock.SetValue(TextBlock.WidthProperty, 100.0);
 
+            FrameworkElementFactory netTextBlock = new FrameworkElementFactory(typeof(TextBlock));
+            netTextBlock.SetBinding(TextBlock.TextProperty, new Binding("Net"));
+            netTextBlock.SetValue(TextBlock.MarginProperty, new Thickness(5));
+            netTextBlock.SetValue(TextBlock.WidthProperty, 100.0);
+
             // Add TextBlocks to StackPanel
             stackPanelFactory.AppendChild(nameTextBlock);
             stackPanelFactory.AppendChild(idTextBlock);
             stackPanelFactory.AppendChild(cpuTextBlock);
+            stackPanelFactory.AppendChild(netTextBlock);
 
             // Set the VisualTree of the HierarchicalDataTemplate
             hierarchicalDataTemplate.VisualTree = stackPanelFactory;
@@ -564,9 +570,15 @@ namespace RemoteSync
             innerCpuTextBlock.SetValue(TextBlock.MarginProperty, new Thickness(5));
             innerCpuTextBlock.SetValue(TextBlock.WidthProperty, 100.0);
 
+            FrameworkElementFactory innerNetTextBlock = new FrameworkElementFactory(typeof(TextBlock));
+            innerNetTextBlock.SetBinding(TextBlock.TextProperty, new Binding("Net"));
+            innerNetTextBlock.SetValue(TextBlock.MarginProperty, new Thickness(5));
+            innerNetTextBlock.SetValue(TextBlock.WidthProperty, 100.0);
+
             innerStackPanelFactory.AppendChild(innerNameTextBlock);
             innerStackPanelFactory.AppendChild(innerIdTextBlock);
             innerStackPanelFactory.AppendChild(innerCpuTextBlock);
+            innerStackPanelFactory.AppendChild(innerNetTextBlock);
 
             innerDataTemplate.VisualTree = innerStackPanelFactory;
 
@@ -619,6 +631,7 @@ namespace RemoteSync
         public int ID { get; set; }
         public string Name { get; set; }
         public string CPU { get; set; }
+        public string Net { get; set; }
         public ObservableCollection<ProcessItem> Children { get; set; } // To store child items
 
         public ProcessItem()

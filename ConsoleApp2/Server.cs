@@ -154,7 +154,7 @@ namespace Server
 
             return new Packet(RequestType.Ok, msg);
         }
-        private Packet HandleGetRequest()
+        private  Packet HandleGetRequest()
         {
             var processes = Process.GetProcesses();
             var parentProcesses = new List<Process>();
@@ -222,7 +222,7 @@ namespace Server
         }
 
         //helpers for get request
-        private string GetProcessData(Process process)
+        private string GetProcessData1(Process process)
         {
             string data = "";
             try
@@ -232,7 +232,7 @@ namespace Server
                 DateTime startTime = DateTime.Now;
 
                 // Wait for a short period to capture CPU usage over time
-                Thread.Sleep(10);
+                Thread.Sleep(50);
 
                 // Capture the end CPU usage time
                 TimeSpan endCpuUsage = process.TotalProcessorTime;
@@ -243,14 +243,98 @@ namespace Server
                 double intervalMs = (endTime - startTime).TotalMilliseconds;
                 double cpuUsagePercentage = (cpuUsedMs / (Environment.ProcessorCount * intervalMs)) * 100;
 
-                data = $"{process.Id}#{process.ProcessName}#{cpuUsagePercentage.ToString("F2")}%";
+                //network
+                //float totalBandwidth = 30*1000*1000/8;
+                //string NetworkUsagePercentage = GetNetworkUsagePercentage(process.Id, totalBandwidth, 10);
+
+                long totalNetworkBandwidth = 3750000;
+
+                // Initialize performance counters for the process
+                PerformanceCounter bytesReceivedCounter = new PerformanceCounter("Process", "IO Read Bytes/sec", process.ProcessName);
+                PerformanceCounter bytesSentCounter = new PerformanceCounter("Process", "IO Write Bytes/sec", process.ProcessName);
+
+                // Get the current network usage
+                float bytesReceivedPerSec = bytesReceivedCounter.NextValue();
+                float bytesSentPerSec = bytesSentCounter.NextValue();
+
+                // Calculate total network usage for the process
+                float totalBytesPerSec = bytesReceivedPerSec + bytesSentPerSec;
+
+                // Calculate network usage percentage
+                float NetworkUsagePercentage = (totalBytesPerSec / totalNetworkBandwidth) * 100;
+
+                //data = $"{process.Id}#{process.ProcessName}#{cpuUsagePercentage.ToString("F2")}%";
+                data = $"{process.Id}#{process.ProcessName}#{cpuUsagePercentage.ToString("F2")}%#{NetworkUsagePercentage}%";
             }
             catch (Exception)
             {
-                data = $"{process.Id}#{process.ProcessName}#0.00%";
+                data = $"{process.Id}#{process.ProcessName}#999%#999%";
+            }
+            return data;
+
+        }
+        private string GetProcessData(Process process)
+        {
+            string data = "";
+            try
+            {
+                // Get initial CPU time
+                TimeSpan startCpuTime = process.TotalProcessorTime;
+                DateTime startTime = DateTime.UtcNow;
+
+                // Get initial network usage
+                var networkInterfaces = NetworkInterface.GetAllNetworkInterfaces();
+                long startBytesReceived = networkInterfaces.Sum(ni => ni.GetIPv4Statistics().BytesReceived);
+                long startBytesSent = networkInterfaces.Sum(ni => ni.GetIPv4Statistics().BytesSent);
+
+                // Wait for a second to calculate CPU usage over time
+                Thread.Sleep(500);
+
+                // Get final CPU time
+                TimeSpan endCpuTime = process.TotalProcessorTime;
+                DateTime endTime = DateTime.UtcNow;
+
+                // Calculate CPU usage
+                double cpuUsedMs = (endCpuTime - startCpuTime).TotalMilliseconds;
+                double totalMsPassed = (endTime - startTime).TotalMilliseconds;
+                double cpuUsagePercentage = (cpuUsedMs / totalMsPassed) / Environment.ProcessorCount * 100;
+
+                // Get final network usage
+                long endBytesReceived = networkInterfaces.Sum(ni => ni.GetIPv4Statistics().BytesReceived);
+                long endBytesSent = networkInterfaces.Sum(ni => ni.GetIPv4Statistics().BytesSent);
+                long networkUsagePercentage = (endBytesReceived + endBytesSent) - (startBytesReceived + startBytesSent);
+
+                data = $"{process.Id}#{process.ProcessName}#{cpuUsagePercentage.ToString("F2")}%#{networkUsagePercentage}%";
+            }
+            catch (Exception)
+            {
+                data = $"{process.Id}#{process.ProcessName}#999%#999%";
             }
             return data;
         }
+        public static string GetNetworkUsagePercentage(int processId, float totalBandwidth, int monitoringInterval)
+        {
+            using (PerformanceCounter pcSent = new PerformanceCounter("Process", "IO Write Bytes/sec", processId.ToString()))
+            using (PerformanceCounter pcReceived = new PerformanceCounter("Process", "IO Read Bytes/sec", processId.ToString()))
+            {
+                float bytesSentStart = pcSent.NextValue();
+                float bytesReceivedStart = pcReceived.NextValue();
+
+                Thread.Sleep(monitoringInterval);
+
+                float bytesSentEnd = pcSent.NextValue();
+                float bytesReceivedEnd = pcReceived.NextValue();
+
+                float bytesSent = bytesSentEnd - bytesSentStart;
+                float bytesReceived = bytesReceivedEnd - bytesReceivedStart;
+                float totalBytes = bytesSent + bytesReceived;
+
+                float usagePercentage = (totalBytes / (totalBandwidth * (monitoringInterval / 1000.0f))) * 100;
+
+                return usagePercentage.ToString();
+            }
+        }                
+        
         public int GetParentProcessId(int processId)
         {
             int parentPid = 0;
@@ -286,6 +370,7 @@ namespace Server
             }
             return parentPid;
         }
+        
         [StructLayout(LayoutKind.Sequential)]
         public struct PROCESS_BASIC_INFORMATION
         {
@@ -296,16 +381,12 @@ namespace Server
             public IntPtr UniqueProcessId;
             public IntPtr InheritedFromUniqueProcessId;
         }
-
         [DllImport("ntdll.dll")]
         public static extern int NtQueryInformationProcess(IntPtr processHandle, int processInformationClass, ref PROCESS_BASIC_INFORMATION processInformation, int processInformationLength, ref int returnLength);
-
         [DllImport("kernel32.dll")]
         private static extern bool CloseHandle(IntPtr hObject);
-
         [DllImport("kernel32.dll", SetLastError = true)]
         private static extern IntPtr OpenProcess(ProcessAccessFlags processAccess, bool bInheritHandle, int processId);
-
         [Flags]
         public enum ProcessAccessFlags : uint
         {
