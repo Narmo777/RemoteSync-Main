@@ -14,6 +14,7 @@ using System.Threading;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Net.NetworkInformation;
+using NvAPIWrapper.GPU;
 
 namespace Server
 {
@@ -180,22 +181,28 @@ namespace Server
             foreach (Process process in parentProcesses)
             {
                 string data = GetProcessData(process);
-                if (totalDataBuilder.Length > 0)
+                if (data != "ERROR")
                 {
-                    totalDataBuilder += '|';
+                    if (totalDataBuilder.Length > 0)
+                    {
+                        totalDataBuilder += '|';
+                    }
+                    totalDataBuilder += data; 
                 }
-                totalDataBuilder += data;
             }
 
             // Process child processes
             foreach (Process process in childProcesses)
             {
                 string data = GetProcessData(process);
-                if (totalDataBuilder.Length > 0)
+                if (data != "ERROR")
                 {
-                    totalDataBuilder += '|';
+                    if (totalDataBuilder.Length > 0)
+                    {
+                        totalDataBuilder += '|';
+                    }
+                    totalDataBuilder += data; 
                 }
-                totalDataBuilder += data;
             }
 
             string totalData = totalDataBuilder.ToString();
@@ -282,13 +289,10 @@ namespace Server
                 TimeSpan startCpuTime = process.TotalProcessorTime;
                 DateTime startTime = DateTime.UtcNow;
 
-                // Get initial network usage
-                var networkInterfaces = NetworkInterface.GetAllNetworkInterfaces();
-                long startBytesReceived = networkInterfaces.Sum(ni => ni.GetIPv4Statistics().BytesReceived);
-                long startBytesSent = networkInterfaces.Sum(ni => ni.GetIPv4Statistics().BytesSent);
 
-                // Wait for a second to calculate CPU usage over time
-                Thread.Sleep(500);
+                // Wait for a short time to calculate usage over time----------------------------------
+                Thread.Sleep(50);
+
 
                 // Get final CPU time
                 TimeSpan endCpuTime = process.TotalProcessorTime;
@@ -299,41 +303,18 @@ namespace Server
                 double totalMsPassed = (endTime - startTime).TotalMilliseconds;
                 double cpuUsagePercentage = (cpuUsedMs / totalMsPassed) / Environment.ProcessorCount * 100;
 
-                // Get final network usage
-                long endBytesReceived = networkInterfaces.Sum(ni => ni.GetIPv4Statistics().BytesReceived);
-                long endBytesSent = networkInterfaces.Sum(ni => ni.GetIPv4Statistics().BytesSent);
-                long networkUsagePercentage = (endBytesReceived + endBytesSent) - (startBytesReceived + startBytesSent);
+                
+                var memory = ((process.WorkingSet / 1024)/1024).ToString() + " Mb/s";
+                var peakMemory = ((process.PeakWorkingSet / 1024)/1024).ToString() + " Mb/s";
 
-                data = $"{process.Id}#{process.ProcessName}#{cpuUsagePercentage.ToString("F2")}%#{networkUsagePercentage}%";
+                data = $"{process.Id}#{process.ProcessName}#{cpuUsagePercentage.ToString("F2")}%#{memory}#{peakMemory}";
             }
             catch (Exception)
             {
-                data = $"{process.Id}#{process.ProcessName}#999%#999%";
+                data = "ERROR";
             }
             return data;
         }
-        public static string GetNetworkUsagePercentage(int processId, float totalBandwidth, int monitoringInterval)
-        {
-            using (PerformanceCounter pcSent = new PerformanceCounter("Process", "IO Write Bytes/sec", processId.ToString()))
-            using (PerformanceCounter pcReceived = new PerformanceCounter("Process", "IO Read Bytes/sec", processId.ToString()))
-            {
-                float bytesSentStart = pcSent.NextValue();
-                float bytesReceivedStart = pcReceived.NextValue();
-
-                Thread.Sleep(monitoringInterval);
-
-                float bytesSentEnd = pcSent.NextValue();
-                float bytesReceivedEnd = pcReceived.NextValue();
-
-                float bytesSent = bytesSentEnd - bytesSentStart;
-                float bytesReceived = bytesReceivedEnd - bytesReceivedStart;
-                float totalBytes = bytesSent + bytesReceived;
-
-                float usagePercentage = (totalBytes / (totalBandwidth * (monitoringInterval / 1000.0f))) * 100;
-
-                return usagePercentage.ToString();
-            }
-        }                
         
         public int GetParentProcessId(int processId)
         {
@@ -406,6 +387,25 @@ namespace Server
                 }                
             }
             return childProcesses;
+        }
+
+        private double TotalGPUUsage()
+        {
+            // Get initial GPU usage
+            PhysicalGPU gpu = PhysicalGPU.GetPhysicalGPUs().FirstOrDefault();
+            var startGpuUsage = gpu.UsageInformation.GPU.Percentage;
+
+            // Wait for a second to calculate usage over time
+            Thread.Sleep(50);
+
+
+            // Get final GPU usage
+            var endGpuUsage = gpu.UsageInformation.GPU.Percentage;
+
+            // Average GPU usage over the interval
+            double gpuUsagePercentage = (startGpuUsage + endGpuUsage) / 2;
+
+            return gpuUsagePercentage;
         }
     }
 }

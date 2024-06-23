@@ -44,7 +44,9 @@ namespace Protocol
             var header = new byte[HeaderSize]; //the first byte of the header is the request type, according to the enum
             int totalRead = 0, bytesRead = 0;
 
-            // Read the header
+            // Read the network stream
+
+            //read the header
             while (totalRead < HeaderSize && (bytesRead = await ns.ReadAsync(header, totalRead, HeaderSize - totalRead)) > 0)
             {
                 totalRead += bytesRead;
@@ -53,6 +55,7 @@ namespace Protocol
             if (totalRead != HeaderSize)
                 throw new InvalidOperationException("Incomplete header read");
 
+            //create variables
             var requestType = RequestTypeExtention.FromByte(header[0]);
             var dataLen = BitConverter.ToInt32(header, 1);
             var data = new byte[dataLen];

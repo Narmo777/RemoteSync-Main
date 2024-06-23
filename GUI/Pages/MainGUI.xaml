@@ -16,10 +16,10 @@
         </Grid.ColumnDefinitions>
 
         <StackPanel Grid.Column="0">
-            <Button x:Name="Refresh" Height="50" Content="Refresh" FontSize="17" Click="Refresh_Click"/>
-            <Button x:Name="Kill" Height="50" Content="kill selected procces" FontSize="17" Click="Kill_Click"/>
-            <Button x:Name="Rsc" Height="50" Content="Get all resources" FontSize="17" Click="Rsc_Click"/>
-            <Button x:Name="GetFile" Height="50" Content="Save all processes to file" FontSize="17" Click="File_Click"/>
+            <Button x:Name="Refresh" Height="50" Content="Refresh" FontSize="17" Click="Refresh_Click" IsEnabled="False"/>
+            <Button x:Name="Kill" Height="50" Content="Kill selected procces" FontSize="17" Click="Kill_Click" IsEnabled="False"/>
+            <Button x:Name="Rsc" Height="50" Content="Get all resources" FontSize="17" Click="Rsc_Click" IsEnabled="False"/>
+            <Button x:Name="GetFile" Height="50" Content="Save all processes to file" FontSize="17" Click="File_Click" IsEnabled="False"/>
         </StackPanel>
 
         <StackPanel Grid.Column="1">
@@ -32,6 +32,12 @@
             </TabControl>
 
         </StackPanel>
+        <MediaElement x:Name="LoadingGIF" 
+                      HorizontalAlignment="Left" Height="368" Margin="233,209,0,0" VerticalAlignment="Top" Width="384" 
+                      LoadedBehavior="Play" UnloadedBehavior="Manual" 
+                      Grid.Column="1" 
+                      Source="C:\Users\WINDOWS\Source\Repos\RemoteSync-Main\GUI\Images\Loading_icon.gif"
+                      MediaEnded="MediaEnded_GIF"/>
 
     </Grid>
 </Page>

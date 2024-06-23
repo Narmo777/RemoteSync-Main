@@ -37,7 +37,7 @@ namespace RemoteSync
         public static int clientsNumber = 0;    //counts how many clients are connected
         private static int clientIndex;         //variable that changes when going to another tab 
         private string search = "";             //variable that changes according to search box
-        private string id;                      //variable that changes when a process is clicked in the listbox
+        private string id= null;                      //variable that changes when a process is clicked in the listbox
         private bool skipOneTime = false;       
 
         public MainGUI(string name)
@@ -64,19 +64,42 @@ namespace RemoteSync
             /// Sends a kill request packet to the server asynchronously with the currently selected ID.
             /// </summary>
 
-            var selectedId = this.id;
-            skipOneTime = true;            
-            var baseMsg = new Packet(RequestType.Kill, selectedId);
-            await Connect(GetCurrentIP(), 300, baseMsg);            
+            if (id != null)
+            {
+                var selectedId = this.id;
+                skipOneTime = true;
+                var baseMsg = new Packet(RequestType.Kill, selectedId);
+                //await Connect(GetCurrentIP(), 300, baseMsg);
+                await SendRequest(baseMsg, GetCurrentIP()); 
+            }
+            else
+            {
+                New_Error_Window("please select an app", "error");
+            }
         }        
         private void Rsc_Click(object sender, RoutedEventArgs e)
         {
-            /// <summary>
-            /// Event handler for the Rsc button click event.
-            /// Displays an error window indicating the button is not in use.
-            /// </summary>
+            int totalMemory = 0;
+            double totalCPU = 0;
 
-            New_Error_Window("button currently not in use", "error");
+            foreach (var item in itemsDictionary.Values)
+            {
+                double currentCPU = double.Parse(item.CPU.Substring(0, item.CPU.Length - 1));
+                int currentMemory = int.Parse(item.Memory.Substring(0, item.Memory.Length - 5));
+
+                totalCPU += currentCPU;
+                totalMemory += currentMemory;
+                //if (currentCPU != 999)
+                //{
+                //    int currentMemory = int.Parse(item.Memory.Substring(0, item.Memory.Length - 5));
+
+                //    totalCPU += currentCPU;
+                //    totalMemory += currentMemory;
+                //}
+            }
+
+            string ret = $"total CPU usage: {totalCPU}%\ntotal Memory usage: {totalMemory} Mb/s";
+            New_Error_Window(ret, "resource");
         }
         private void File_Click(object sender, RoutedEventArgs e)
         {
@@ -136,35 +159,6 @@ namespace RemoteSync
             if (Search.Text == "Search")
                 Search.Text = string.Empty;
         }       
-
-        //connect the gui to the server
-        public async Task Connect(string ip, int port, Packet p)
-        {
-            var clinet = new TcpClient(ip, port); //creates a new tcp client
-            var stream = clinet.GetStream();
-
-            var baseMsg = p;
-
-            await stream.WriteAsync((byte[])baseMsg, 0, baseMsg.DataSize + Packet.HeaderSize); //sends the messsage
-            await stream.FlushAsync();
-
-            var resp = await Packet.FromNetworkStream(stream); //wait for the server response
-            if (baseMsg.RequestType == RequestType.Get)
-            {
-                //RefreshProcesses();
-                //foreach (var item in resp.GetContentAsString().Split('#').Select(x => x.Split('|')).Select(x => (int.Parse(x[0]), x[1])))
-                //{
-                //    MainListBox.Items.Add(item);
-                //};
-
-                //InitTimer();
-            }
-            else if (baseMsg.RequestType == RequestType.Kill)
-            {
-                //RefreshProcesses();
-            }
-            stream.Close();
-        }
         
         //change index when going through tabs
         private void TabSelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -200,22 +194,22 @@ namespace RemoteSync
                 }
             }
         }
-        public async Task<List<(int, string, string, string)>> GetProcesscesFromServer(string ip) 
+        public async Task<List<(int, string, string, string, string)>> GetProcesscesFromServer(string ip) 
         {
             var requset = await SendRequest(new Packet(RequestType.Get, ""), ip);
             var content = requset.GetContentAsString();
 
-            var result = new List<(int, string, string, string)>();
+            var result = new List<(int, string, string, string, string)>();
 
             var parts = content.Split('|');
             foreach (var part in parts)
             {
                 var components = part.Split('#');
-                if (components.Length == 4)
+                if (components.Length == 5)
                 {
                     if (int.TryParse(components[0], out int number))
                     {
-                        result.Add((number, components[1], components[2], components[3]));
+                        result.Add((number, components[1], components[2], components[3], components[4]));
                     }
                 }
             }
@@ -235,6 +229,8 @@ namespace RemoteSync
                 var selectedItem = treeView.SelectedItem as ProcessItem;
                 this.id = selectedItem.ID.ToString();
             }
+            Kill.IsEnabled = true;
+
         }
         private async Task RefreshScreenFromServerNew(string username)
         {
@@ -308,10 +304,7 @@ namespace RemoteSync
                             {
                                 ItemsSource = new Binding("Children")
                             };
-                            //FrameworkElementFactory textBlockFactory = new FrameworkElementFactory(typeof(TextBlock));
-                            //textBlockFactory.SetBinding(TextBlock.TextProperty, new Binding("Name"));
-                            //hdt.VisualTree = textBlockFactory;
-                            //treeView.ItemTemplate = hdt;
+
                             treeView.ItemTemplate = CreateTreeView();
                             // Set the TreeView as the content of the TabItem
                             newTabItem.Content = treeView;
@@ -357,15 +350,24 @@ namespace RemoteSync
                     }
                 }
             }
+            if(serverClientList != null && itemsDictionary.Values.Count > 0)
+            {
+                Refresh.IsEnabled = true;
+                Rsc.IsEnabled = true;
+                GetFile.IsEnabled = true;
+
+                LoadingGIF.Stop();
+                LoadingGIF.Visibility = Visibility.Collapsed;
+            }
         }
-        private void UpdateProcessListNew(List<(int, string, string, string)> newProcesses, TreeView processTreeView)
+        private void UpdateProcessListNew(List<(int, string, string, string, string)> newProcesses, TreeView processTreeView)
         {
             // Dictionary to store parent process items by name
             var parentDictionary = new Dictionary<string, ProcessItem>();
 
             foreach (var process in newProcesses)
             {
-                var newItem = new ProcessItem { ID = process.Item1, Name = process.Item2, CPU = process.Item3, Net = process.Item4};
+                var newItem = new ProcessItem { ID = process.Item1, Name = process.Item2, CPU = process.Item3, Memory = process.Item4, PeakMemory = process.Item5 };
 
                 if (parentDictionary.ContainsKey(newItem.Name))
                 {
@@ -470,21 +472,23 @@ namespace RemoteSync
             {
                 var header = "";
                 var returnTreeView = new TreeView();
+
                 foreach (var client in currentClientList)
                 {
                     if (client.Item3 == clientIndex)
                     {
-                        header = client.Item2;
+                        header = client.Item1;
                     }
                 }
-                foreach (var item in ComputerTabs.Items)
-                {
-                    TabItem tb = item as TabItem;
-                    if (tb.Header == header)
+
+                foreach(TabItem tab in CmpTabs.Items)
+                {                    
+                    if(tab.Header.ToString() == header)
                     {
-                        returnTreeView = tb.Content as TreeView;
+                        returnTreeView = tab.Content as TreeView;
                     }
                 }
+
                 return returnTreeView;
             }
             return null;
@@ -536,16 +540,22 @@ namespace RemoteSync
             cpuTextBlock.SetValue(TextBlock.MarginProperty, new Thickness(5));
             cpuTextBlock.SetValue(TextBlock.WidthProperty, 100.0);
 
-            FrameworkElementFactory netTextBlock = new FrameworkElementFactory(typeof(TextBlock));
-            netTextBlock.SetBinding(TextBlock.TextProperty, new Binding("Net"));
-            netTextBlock.SetValue(TextBlock.MarginProperty, new Thickness(5));
-            netTextBlock.SetValue(TextBlock.WidthProperty, 100.0);
+            FrameworkElementFactory memoryTextBlock = new FrameworkElementFactory(typeof(TextBlock));
+            memoryTextBlock.SetBinding(TextBlock.TextProperty, new Binding("Memory"));
+            memoryTextBlock.SetValue(TextBlock.MarginProperty, new Thickness(5));
+            memoryTextBlock.SetValue(TextBlock.WidthProperty, 100.0);
+
+            FrameworkElementFactory peakMemoryTextBlock = new FrameworkElementFactory(typeof(TextBlock));
+            peakMemoryTextBlock.SetBinding(TextBlock.TextProperty, new Binding("PeakMemory"));
+            peakMemoryTextBlock.SetValue(TextBlock.MarginProperty, new Thickness(5));
+            peakMemoryTextBlock.SetValue(TextBlock.WidthProperty, 100.0);
 
             // Add TextBlocks to StackPanel
             stackPanelFactory.AppendChild(nameTextBlock);
             stackPanelFactory.AppendChild(idTextBlock);
             stackPanelFactory.AppendChild(cpuTextBlock);
-            stackPanelFactory.AppendChild(netTextBlock);
+            stackPanelFactory.AppendChild(memoryTextBlock);
+            stackPanelFactory.AppendChild(peakMemoryTextBlock);
 
             // Set the VisualTree of the HierarchicalDataTemplate
             hierarchicalDataTemplate.VisualTree = stackPanelFactory;
@@ -570,15 +580,21 @@ namespace RemoteSync
             innerCpuTextBlock.SetValue(TextBlock.MarginProperty, new Thickness(5));
             innerCpuTextBlock.SetValue(TextBlock.WidthProperty, 100.0);
 
-            FrameworkElementFactory innerNetTextBlock = new FrameworkElementFactory(typeof(TextBlock));
-            innerNetTextBlock.SetBinding(TextBlock.TextProperty, new Binding("Net"));
-            innerNetTextBlock.SetValue(TextBlock.MarginProperty, new Thickness(5));
-            innerNetTextBlock.SetValue(TextBlock.WidthProperty, 100.0);
+            FrameworkElementFactory innerMemoryTextBlock = new FrameworkElementFactory(typeof(TextBlock));
+            innerMemoryTextBlock.SetBinding(TextBlock.TextProperty, new Binding("Memory"));
+            innerMemoryTextBlock.SetValue(TextBlock.MarginProperty, new Thickness(5));
+            innerMemoryTextBlock.SetValue(TextBlock.WidthProperty, 100.0);
+
+            FrameworkElementFactory innerPeakMemoryTextBlock = new FrameworkElementFactory(typeof(TextBlock));
+            innerPeakMemoryTextBlock.SetBinding(TextBlock.TextProperty, new Binding("PeakMemory"));
+            innerPeakMemoryTextBlock.SetValue(TextBlock.MarginProperty, new Thickness(5));
+            innerPeakMemoryTextBlock.SetValue(TextBlock.WidthProperty, 100.0);
 
             innerStackPanelFactory.AppendChild(innerNameTextBlock);
             innerStackPanelFactory.AppendChild(innerIdTextBlock);
             innerStackPanelFactory.AppendChild(innerCpuTextBlock);
-            innerStackPanelFactory.AppendChild(innerNetTextBlock);
+            innerStackPanelFactory.AppendChild(innerMemoryTextBlock);
+            innerStackPanelFactory.AppendChild(innerPeakMemoryTextBlock);
 
             innerDataTemplate.VisualTree = innerStackPanelFactory;
 
@@ -625,13 +641,20 @@ namespace RemoteSync
             // Insert the header item as the first item in the TreeView
             tree.Items.Insert(0, headerItem);
         }
+
+        private void MediaEnded_GIF(object sender, RoutedEventArgs e)
+        {
+            LoadingGIF.Position = new TimeSpan(0, 0, 1);
+            LoadingGIF.Play();
+        }
     }
     public class ProcessItem
     {
         public int ID { get; set; }
         public string Name { get; set; }
         public string CPU { get; set; }
-        public string Net { get; set; }
+        public string Memory { get; set; }
+        public string PeakMemory { get; set; }
         public ObservableCollection<ProcessItem> Children { get; set; } // To store child items
 
         public ProcessItem()
@@ -642,7 +665,7 @@ namespace RemoteSync
         public override string ToString()
         {
             var childrenToString = string.Join("\n", Children.Select(c => c.ToString()));
-            return $"ID: {ID}, Name: {Name}, CPU: {CPU} {childrenToString}";
+            return $"ID: {ID}, Name: {Name}, CPU: {CPU} , Memory {Memory}, Peak Memory {PeakMemory}";
         }
     }
 }
