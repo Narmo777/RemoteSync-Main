@@ -38,7 +38,6 @@ namespace RemoteSync
         private static int clientIndex;         //variable that changes when going to another tab 
         private string search = "";             //variable that changes according to search box
         private string id= null;                      //variable that changes when a process is clicked in the listbox
-        private bool skipOneTime = false;       
 
         public MainGUI(string name)
         {
@@ -67,7 +66,6 @@ namespace RemoteSync
             if (id != null)
             {
                 var selectedId = this.id;
-                skipOneTime = true;
                 var baseMsg = new Packet(RequestType.Kill, selectedId);
                 //await Connect(GetCurrentIP(), 300, baseMsg);
                 await SendRequest(baseMsg, GetCurrentIP()); 
@@ -306,6 +304,7 @@ namespace RemoteSync
                             };
 
                             treeView.ItemTemplate = CreateTreeView();
+                            treeView.SelectedItemChanged += TreeView_SelectedItemChanged;
                             // Set the TreeView as the content of the TabItem
                             newTabItem.Content = treeView;
 

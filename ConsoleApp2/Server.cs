@@ -164,14 +164,17 @@ namespace Server
             // Classify processes into parent and child lists
             foreach (Process process in processes)
             {
-                int parentPid = GetParentProcessId(process.Id);
-                if (parentPid == 0 || parentPid == process.Id)
+                if (process.ProcessName != "ConsoleApp2" && process.ProcessName != "GUI")
                 {
-                    parentProcesses.Add(process);
-                }
-                else
-                {
-                    childProcesses.Add(process);
+                    int parentPid = GetParentProcessId(process.Id);
+                    if (parentPid == 0 || parentPid == process.Id)
+                    {
+                        parentProcesses.Add(process);
+                    }
+                    else
+                    {
+                        childProcesses.Add(process);
+                    } 
                 }
             }
 
